@@ -7,8 +7,8 @@
 #pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 #endif
 
-#define WIDTH 1280
-#define HEIGHT 720
+#define WIDTH 600
+#define HEIGHT 800
 
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = "Window Class Name";
