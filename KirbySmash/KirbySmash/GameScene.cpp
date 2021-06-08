@@ -275,9 +275,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				if (!CheckDown()) {
 					cnt = 0;
+					SetTimer(hwnd, 4, 1, NULL);
 					KillTimer(hwnd, 3);
 				}
 			}
+			break;
+		case 4: //새로운 블럭만들기
+			NewBlock();
+			KillTimer(hwnd, 4);
 			break;
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
@@ -451,7 +456,7 @@ bool Check3() {
 	//가로확인
 	for (int i = 0; i < BLOCKCOL; ++i) {
 		for (int j = 0; j < BLOCKROW - 2; ++j) {
-			if (block[i][j].color == block[i][j + 1].color && block[i][j].color == block[i][j + 2].color) {
+			if (block[i][j].color == block[i][j + 1].color && block[i][j].color == block[i][j + 2].color && block[i][j].color != -1) {
 				while (block[i][j].color == block[i][j + 1].color) {
 					block[i][j].destroy = true;
 					block[i][j].color = 6;
@@ -475,7 +480,7 @@ bool Check3() {
 	//세로확인
 	for (int i = 0; i < BLOCKROW; ++i) {
 		for (int j = 0; j < BLOCKCOL - 2; ++j) {
-			if (block[j][i].color == block[j + 1][i].color && block[j][i].color == block[j + 2][i].color) {
+			if (block[j][i].color == block[j + 1][i].color && block[j][i].color == block[j + 2][i].color && block[i][j].color != -1) {
 				while (block[i][j].color == block[i][j + 1].color) {
 					block[j][i].destroy = true;
 					block[j][i].color = 6;
@@ -517,5 +522,31 @@ bool CheckDown() {
 	return false;
 }
 void NewBlock() {
-
+	for (int i = 0; i < BLOCKROW; ++i) {
+		if (block[0][i].color == -1) {
+			switch (stage) {
+			case 1:
+			{
+				std::uniform_int_distribution<> uid(0, 3);
+				block[0][i].color = uid(engine);
+				block[0][i].pos = { 20 + i * ROWDIS, 163 };
+			}
+			break;
+			case 2:
+			{
+				std::uniform_int_distribution<> uid(0, 4);
+				block[0][i].color = uid(engine);
+				block[0][i].pos = { 20 + i * ROWDIS, 163 };
+			}
+			break;
+			case 3:
+			{
+				std::uniform_int_distribution<> uid(0, 5);
+				block[0][i].color = uid(engine);
+				block[0][i].pos = { 20 + i * ROWDIS, 163 };
+			}
+			break;
+			}
+		}
+	}
 }

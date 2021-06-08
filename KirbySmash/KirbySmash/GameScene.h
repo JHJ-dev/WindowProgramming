@@ -62,3 +62,4 @@ void PrintRect(HDC hdc);
 bool Check3();
 void BlockDown();
 bool CheckDown();
+void NewBlock();
