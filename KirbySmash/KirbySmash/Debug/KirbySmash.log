@@ -1,3 +1,1 @@
-﻿  StageScene.cpp
-D:\WindowProgramming\KirbySmash\KirbySmash\StageScene.cpp(206,12): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
+﻿  KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe

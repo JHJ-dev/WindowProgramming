@@ -109,7 +109,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					else kirby.centerPos = { stage23[moveIndex].x, stage23[moveIndex].y - kirby.bitmapSize.y / 2 };
 					if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += Movedir * 10;
 					moveIndex++;
-					//printf("%d : %d, %d\n", moveIndex, stage23[moveIndex].x, stage23[moveIndex].y);
 				}
 				else {
 					if (selectedStage == 1) nowStage = 1;
