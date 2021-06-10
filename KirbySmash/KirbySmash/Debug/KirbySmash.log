@@ -1,1 +1,4 @@
-﻿  KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
+﻿  GameScene.cpp
+D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(540,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
+D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(540,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
+  KirbySmash.vcxproj -> D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\Debug\KirbySmash.exe

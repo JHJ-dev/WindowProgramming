@@ -18,8 +18,10 @@
 #define BLOCKROW 10
 #define BLOCKCOL 12
 #define BLOCKSIZE 36
+#define BLOCKSPEED 5
 #define ROWDIS 45 //블럭간 거리
-#define COLDIS 43 //블럭간 거리
+#define COLDIS 45 //블럭간 거리
+
 std::random_device rd;
 std::mt19937 engine(rd());
 
@@ -29,14 +31,18 @@ LPCTSTR lpszWindowName = "Window Program";
 
 RECT WindowRect; //window크기
 
-bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
-int selx, sely; //선택한 블럭 인덱스
-POINT temp;
-int tmpx, tmpy, cnt;
-int dir;
+static int Goalscore, Turn;
+static bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
+static int selx, sely; //선택한 블럭 인덱스
+static int tmpx, tmpy, cnt; //블럭자리 바꿀때 
+static int dir;
+static int score, destorynum;
 
 enum {
 	Left = 0, Right, Up, Down = 3
+};
+enum {
+	Pink = 0, Blue, Green, Gray, Purple, Orange = 5
 };
 
 struct Object{
@@ -55,11 +61,15 @@ Bit Background;
 Bit Block[7];
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+bool CheckStart();
 void PrintBackGround(HDC hdc); //배경출력
+void PrintBoard(HDC hdc); 
 void PrintBlock(HDC hdc); //블럭출력
-bool CheckBlock(int mx, int my); //마우스 입력과 블럭
+bool BlockSelect(int mx, int my); //마우스 입력과 블럭
 void PrintRect(HDC hdc);
 bool Check3();
 void BlockDown();
 bool CheckDown();
 void NewBlock();
+void PrintScore(HDC hdc);
+void Score();
