@@ -67,9 +67,11 @@ void PrintBoard(HDC hdc);
 void PrintBlock(HDC hdc); //블럭출력
 bool BlockSelect(int mx, int my); //마우스 입력과 블럭
 void PrintRect(HDC hdc);
-bool Check3();
+bool Check3(); //블럭 터지는거 확인
 void BlockDown();
 bool CheckDown();
+void BlockChange(int i, int j); //블럭이 내려왔을때 배열조정
+bool CheckChange(int i, int j);
 void NewBlock();
 void PrintScore(HDC hdc);
 void Score();

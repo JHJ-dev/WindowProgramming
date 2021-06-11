@@ -253,35 +253,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			cnt++;
 			if (cnt == ROWDIS / 5) {
 				for (int i = 0; i < BLOCKROW; ++i) {
-					for (int j = 0; j < BLOCKCOL - 1; ++j) {
-						if (block[j + 1][i].color == -1) {
-							if (block[j + 2][i].color == -1) {
-								int cnt2{ j };
-								cnt = 0;
-								while (block[cnt2 + 1][i].color == -1) {
-									cnt2++;
-								}
-								if (block[j][i].pos.y == block[cnt2][i].pos.y) {
-									Object temp = block[cnt2][i];
-									block[cnt2][i] = block[j][i];
-									block[j][i] = temp;
-									block[j][i].pos.y -= (cnt2 - j) * COLDIS;
-								}
-								break;
-							}
-							Object tmp = block[j + 1][i];
-							block[j + 1][i] = block[j][i];
-							block[j][i] = tmp;
-							cnt = 0;
-							break;
+					for (int j = 0; j < BLOCKCOL; ++j) {
+						if (CheckChange(i, j) && block[j][i].color != -1) {
+							BlockChange(i, j);
 						}
 					}
 				}
 				if (!CheckDown()) {
-					cnt = 0;
 					SetTimer(hwnd, 4, 1, NULL);
 					KillTimer(hwnd, 3);
 				}
+				cnt = 0;
 			}
 			break;
 		case 4: //새로운 블럭만들기
@@ -677,7 +659,7 @@ bool Check3() {
 					block[j][i].color = 6;
 					block[j][i].ani= 0;
 					destorynum++;
-					if (j == BLOCKROW - 1) {
+					if (j == BLOCKCOL - 2) {
 						block[j + 1][i].destroy = true;
 						block[j + 1][i].color = 6;
 						block[j + 1][i].ani = 0;
@@ -739,6 +721,35 @@ bool CheckDown() {
 			if (block[j][i].color == -1 && block[j - 1][i].color != -1) {
 				return true;
 			}
+		}
+	}
+	return false;
+} 
+void BlockChange(int i, int j) {
+	for (int l = 0; l < BLOCKCOL; ++l) {
+		if (block[j][i].pos.x == block[l][i].pos.x && block[j][i].pos.y == block[l][i].pos.y && j != l && l == BLOCKCOL - 1) {
+			Object temp = block[l][i];
+			block[l][i] = block[j][i];
+			block[j][i] = temp;
+			block[j][i].pos.y -= (l - j) * COLDIS;
+		}
+		else if (block[j][i].pos.x == block[l][i].pos.x && block[j][i].pos.y == block[l][i].pos.y && j != l && block[l + 1][i].color != -1) {
+			Object temp = block[l][i];
+			block[l][i] = block[j][i];
+			block[j][i] = temp;
+			block[j][i].pos.y -= (l - j) * COLDIS;
+		}
+	}
+}
+bool CheckChange(int i, int j) {
+	for (int k = 0; k < BLOCKROW; ++k) {
+		for (int l = 0; l < BLOCKCOL; ++l) {
+			if (block[j][i].pos.x == block[l][k].pos.x && block[j][i].pos.y == block[l][k].pos.y && j != l && l == BLOCKCOL - 1) {
+				return true;
+			}
+			else if (block[j][i].pos.x == block[l][k].pos.x && block[j][i].pos.y == block[l][k].pos.y && j != l && block[l + 1][k].color != -1) {
+				return true;
+			}			
 		}
 	}
 	return false;
