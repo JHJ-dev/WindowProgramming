@@ -71,11 +71,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		stageButton[2].drawPos = { 520, 395 };
 		stageButton[2].centerPos = { stageButton[2].drawPos.x + bmp.bmWidth / 2, stageButton[2].drawPos.y + bmp.bmHeight / 2 };
 		//커비
-		kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "kirby.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "walk.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(kirby.hBitmap, sizeof(BITMAP), &bmp);
 		kirby.bitmapSize = { bmp.bmWidth, bmp.bmHeight };
-		kirby.centerPos = { stage12[0].x, stage12[0].y - bmp.bmWidth / 2 };
-		kirby.drawPos = { kirby.centerPos.x - bmp.bmWidth / 2, kirby.centerPos.y - bmp.bmHeight / 2 };
+		kirby.centerPos = { stage12[0].x, stage12[0].y - bmp.bmHeight / 2 };
+		kirby.drawPos = { kirby.centerPos.x - bmp.bmHeight / 2, kirby.centerPos.y - bmp.bmHeight / 2 };
 
 		nowStage = 0;
 		SetTimer(hwnd, 1, 100, NULL);
@@ -103,39 +103,44 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		//커비 그리기
 		if (wParam == 2) {
-			if (Movedir == 1) {
-				if (moveIndex < POINTCNT - 1) {
-					if (selectedStage == 1) kirby.centerPos = { stage12[moveIndex].x, stage12[moveIndex].y - kirby.bitmapSize.y / 2 };
-					else kirby.centerPos = { stage23[moveIndex].x, stage23[moveIndex].y - kirby.bitmapSize.y / 2 };
-					if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += Movedir * 10;
-					moveIndex++;
+			if (kirby.Movedir == 1) {
+				if (kirby.moveIndex < POINTCNT - 1) {
+					if (selectedStage == 1) kirby.centerPos = { stage12[kirby.moveIndex].x, stage12[kirby.moveIndex].y - kirby.bitmapSize.y / 2 };
+					else kirby.centerPos = { stage23[kirby.moveIndex].x, stage23[kirby.moveIndex].y - kirby.bitmapSize.y / 2 };
+					if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += kirby.Movedir * 10;
+					kirby.moveIndex++;
 				}
 				else {
 					if (selectedStage == 1) nowStage = 1;
 					else nowStage = 2;
-					Move = FALSE;
+					kirby.Move = FALSE;
 				}
 			}
-			else if (Movedir == -1) {
-				if (moveIndex > 0) {
-					if (selectedStage == 0) kirby.centerPos = { stage12[moveIndex].x, stage12[moveIndex].y - kirby.bitmapSize.y / 2 };
-					else kirby.centerPos = { stage23[moveIndex].x, stage23[moveIndex].y - kirby.bitmapSize.y / 2 };
-					if (cx > 0) cx += Movedir * 10;
-					moveIndex--;
+			else if (kirby.Movedir == -1) {
+				if (kirby.moveIndex > 0) {
+					if (selectedStage == 0) kirby.centerPos = { stage12[kirby.moveIndex].x, stage12[kirby.moveIndex].y - kirby.bitmapSize.y / 2 };
+					else kirby.centerPos = { stage23[kirby.moveIndex].x, stage23[kirby.moveIndex].y - kirby.bitmapSize.y / 2 };
+					if (cx > 0) cx += kirby.Movedir * 10;
+					kirby.moveIndex--;
 				}
 				else {
 					if (selectedStage == 0) nowStage = 0;
 					else nowStage = 1;
-					Move = FALSE;
+					kirby.Move = FALSE;
 				}
+			}
+			if (kirby.Move) {
+				if (kirby.aniIndex < 11) kirby.aniIndex++;
+				if (kirby.aniIndex == 11) kirby.aniIndex = 0;
 			}
 		}
 
-
 		oldBitmap2 = (HBITMAP)SelectObject(memdc2, kirby.hBitmap);
-		kirby.drawPos = { kirby.centerPos.x - kirby.bitmapSize.x / 2, kirby.centerPos.y - kirby.bitmapSize.y / 2 };
-		TransparentBlt(memdc1, kirby.drawPos.x - cx, kirby.drawPos.y - cy, kirby.bitmapSize.x, kirby.bitmapSize.y, memdc2, 0, 0, kirby.bitmapSize.x, kirby.bitmapSize.y, kirbyRGB);
+		kirby.drawPos = { kirby.centerPos.x - kirby.bitmapSize.y / 2, kirby.centerPos.y - kirby.bitmapSize.y / 2 };
+		TransparentBlt(memdc1, kirby.drawPos.x - cx, kirby.drawPos.y - cy, kirby.bitmapSize.y, kirby.bitmapSize.y, memdc2, kirby.aniIndex * kirby.bitmapSize.y, 0, kirby.bitmapSize.y, kirby.bitmapSize.y, kirbyRGB);
 
+		//if (reverseX) StretchBlt(hdc, drawSize.x, 0, -drawSize.x, drawSize.y, memdc, bringStart.x, bringStart.y, bringSize.x, bringSize.y, SRCCOPY);
+		//else StretchBlt(hdc, 0, 0, drawSize.x, drawSize.y, memdc, bringStart.x, bringStart.y, bringSize.x, bringSize.y, SRCCOPY);
 		SelectObject(memdc2, oldBitmap2);
 		DeleteDC(memdc2);
 		SelectObject(memdc1, oldBitmap1);
@@ -156,7 +161,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_CHAR:
-		if(!Move){
+		if(!kirby.Move){
 			switch (wParam)
 			{
 				//카메라 좌우 스크롤
@@ -179,15 +184,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (InCircle({ stageButton[i].centerPos.x - cx, stageButton[i].centerPos.y - cy }, { mx, my })) {
 				selectedStage = i;
 				if (selectedStage < nowStage) {
-					moveIndex = POINTCNT - 1;
-					Movedir = -1;
+					kirby.moveIndex = POINTCNT - 1;
+					kirby.Movedir = -1;
 				}
 				else if (selectedStage > nowStage) {
-					moveIndex = 0;
-					Movedir = 1;
+					kirby.moveIndex = 0;
+					kirby.Movedir = 1;
 				}
-				else  Movedir = 0;
-				Move = TRUE;
+				else  kirby.Movedir = 0;
+				kirby.Move = TRUE;
 				SetTimer(hwnd, 2, 100, NULL);
 			}
 		}

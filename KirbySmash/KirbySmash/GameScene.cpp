@@ -657,7 +657,7 @@ void PrintBlock(HDC hdc) {
 			case 6: //Destroy
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[6].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[6].bitmapSize.x / 8 * block[i][j].ani), 0, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x - 5, block[i][j].pos.y - 4, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, memdc, (Block[6].bitmapSize.x / 8 * block[i][j].ani), 0, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);

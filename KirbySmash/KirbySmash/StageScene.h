@@ -27,16 +27,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 BOOL InCircle(POINT a, POINT b);		//마우스 좌표가 원 안에 있는지 체크
 
 COLORREF buttonRGB = RGB(201, 206, 181);
-COLORREF kirbyRGB = RGB(136, 227, 148);
+COLORREF kirbyRGB = RGB(100, 100, 100);
 
 int i;	//for문 용
 static int cx, cy;			//카메라 좌표
 static int mx, my;			//마우스 좌표
 static int nowStage;		//현재 스테이지
 static int selectedStage;	//선택된 스테이지
-static int moveIndex;		//이동 좌표 인덱스
-static BOOL Move;			//캐릭터 이동
-static int Movedir;			//캐릭터 이동 방향
+
 
 POINT stage12[POINTCNT] = {
 	{150, 400}, {160, 405}, {170, 410}, {180, 415}, {190, 420},
@@ -57,5 +55,16 @@ struct Image {
 	POINT centerPos;	//중앙 위치
 };
 Image stageBackground;
-Image kirby;
 Image stageButton[3];
+
+struct Character {
+	HBITMAP hBitmap;
+	POINT bitmapSize;	//비트맵 크기
+	POINT drawPos;		//그릴 위치
+	POINT centerPos;	//중앙 위치
+	BOOL Move;			//캐릭터 이동
+	int Movedir;		//캐릭터 이동 방향
+	int moveIndex;		//이동 좌표 인덱스
+	int aniIndex;		//캐릭터 애니메이션 인덱스
+};
+Character kirby;
