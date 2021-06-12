@@ -21,7 +21,7 @@
 #define BLOCKSPEED 5
 #define ROWDIS 45 //블럭간 거리
 #define COLDIS 45 //블럭간 거리
-
+#define SKILLDIS 123 //스킬블럭간 거리
 std::random_device rd;
 std::mt19937 engine(rd());
 
@@ -37,6 +37,7 @@ static int selx, sely; //선택한 블럭 인덱스
 static int tmpx, tmpy, cnt; //블럭자리 바꿀때 
 static int dir;
 static int score, destorynum;
+static int skill, returnscore;
 
 enum {
 	Left = 0, Right, Up, Down = 3
@@ -52,19 +53,21 @@ struct Object{
 	bool destroy;
 };
 Object block[BLOCKCOL][BLOCKROW]; //블럭
-
+Object returnblock[BLOCKCOL][BLOCKROW];
 struct Bit {
 	POINT bitmapSize; //비트맵크기
 	HBITMAP bit;
 };
 Bit Background;
 Bit Block[7];
+Bit Skill[4];
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 bool CheckStart();
 void PrintBackGround(HDC hdc); //배경출력
 void PrintBoard(HDC hdc); 
 void PrintBlock(HDC hdc); //블럭출력
+void PrintSkill(HDC hdc);
 bool BlockSelect(int mx, int my); //마우스 입력과 블럭
 void PrintRect(HDC hdc);
 bool Check3(); //블럭 터지는거 확인
@@ -75,3 +78,10 @@ bool CheckChange(int i, int j);
 void NewBlock();
 void PrintScore(HDC hdc);
 void Score();
+void PrintTurn(HDC hdc);
+int SkillSelect(int mx, int my);
+void PrintSkillRect(HDC hdc);
+void SkillBomb(int mx, int my);
+void SkillSwitch(int mx, int my);
+void SkillTurn();
+void SkillReturn();

@@ -45,6 +45,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 	case WM_CREATE:
 		cnt = 0;
+		skill = -1;
 		LBSel = true;
 		GetClientRect(hwnd, &WindowRect);
 		//비트맵 로드, 크기저장
@@ -87,6 +88,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetObject(Block[6].bit, sizeof(BITMAP), &bmp);
 			Block[6].bitmapSize.x = bmp.bmWidth;
 			Block[6].bitmapSize.y = bmp.bmHeight;
+
+			Skill[0].bit = (HBITMAP)LoadImage(g_hInst, "bomb.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+			GetObject(Skill[0].bit, sizeof(BITMAP), &bmp);
+			Skill[0].bitmapSize.x = bmp.bmWidth;
+			Skill[0].bitmapSize.y = bmp.bmHeight;
+
+			Skill[1].bit = (HBITMAP)LoadImage(g_hInst, "switch.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+			GetObject(Skill[0].bit, sizeof(BITMAP), &bmp);
+			Skill[1].bitmapSize.x = bmp.bmWidth;
+			Skill[1].bitmapSize.y = bmp.bmHeight;
+
+			Skill[2].bit = (HBITMAP)LoadImage(g_hInst, "plus.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+			GetObject(Skill[0].bit, sizeof(BITMAP), &bmp);
+			Skill[2].bitmapSize.x = bmp.bmWidth;
+			Skill[2].bitmapSize.y = bmp.bmHeight;
+
+			Skill[3].bit = (HBITMAP)LoadImage(g_hInst, "return.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+			GetObject(Skill[0].bit, sizeof(BITMAP), &bmp);
+			Skill[3].bitmapSize.x = bmp.bmWidth;
+			Skill[3].bitmapSize.y = bmp.bmHeight;
 		}
 
 		//스테이지정보
@@ -139,16 +160,44 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		int mx = LOWORD(lParam);
 		int my = HIWORD(lParam);
 		if (LBSel) {
-			if (BlockSelect(mx, my)) {
+			if (skill != -1) { //스킬이 눌려있을때
+				switch (skill) {
+				case 0:
+					SkillBomb(mx, my);
+					SetTimer(hwnd, 1, 100, NULL);
+					break;
+				case 1:
+					SkillSwitch(mx, my);
+					break;
+				default:
+					skill = -1;
+					break;
+				}
+			}
+			else if (BlockSelect(mx, my)) {
 				if (IsSel) {
-					SetTimer(hwnd, 2, 1, NULL); //블럭 자리바꾸기 애니메이션
 					IsSel = false;
 					LBSel = false;
-					Turn--;
+					for (int i = 0; i < BLOCKCOL; ++i) {
+						for (int j = 0; j < BLOCKROW; ++j) {
+							returnblock[i][j] = block[i][j];
+							returnscore = score;
+						}
+					}
+					SetTimer(hwnd, 2, 1, NULL); //블럭 자리바꾸기 애니메이션
 				}
 				else {
 					IsSel = true;
 				}
+			}
+			if (skill == -1) {
+				skill = SkillSelect(mx, my);
+			}
+			if (skill == 2) {
+				SkillTurn();
+			}
+			else if (skill == 3) {
+				SkillReturn();
 			}
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
@@ -190,10 +239,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Object temp = block[tmpy][tmpx];
 					block[tmpy][tmpx] = block[sely][selx];
 					block[sely][selx] = temp;
-					cnt = 0; dir = 4; LBSel = true;
+					cnt = 0;
 					KillTimer(hwnd, 2);
 					if (Check3()) {
+						dir = 4;
+						Turn--;
 						SetTimer(hwnd, 1, 100, NULL);
+					}
+					else {
+						SetTimer(hwnd, 5, 1, NULL);
 					}
 				}
 				break;
@@ -205,10 +259,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Object temp = block[tmpy][tmpx];
 					block[tmpy][tmpx] = block[sely][selx];
 					block[sely][selx] = temp;
-					cnt = 0; dir = 4; LBSel = true;
+					cnt = 0;
 					KillTimer(hwnd, 2);
 					if (Check3()) {
+						dir = 4;
+						Turn--;
 						SetTimer(hwnd, 1, 100, NULL);
+					}
+					else {
+						SetTimer(hwnd, 5, 1, NULL);
 					}
 				}
 				break;
@@ -220,10 +279,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Object temp = block[tmpy][tmpx];
 					block[tmpy][tmpx] = block[sely][selx];
 					block[sely][selx] = temp;
-					cnt = 0; dir = 4; LBSel = true;
+					cnt = 0;
 					KillTimer(hwnd, 2);
 					if (Check3()) {
+						dir = 4;
+						Turn--;
 						SetTimer(hwnd, 1, 100, NULL);
+					}
+					else {
+						SetTimer(hwnd, 5, 1, NULL);
 					}
 				}
 				break;
@@ -235,10 +299,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					Object temp = block[tmpy][tmpx];
 					block[tmpy][tmpx] = block[sely][selx];
 					block[sely][selx] = temp;
-					cnt = 0; dir = 4; LBSel = true;
+					cnt = 0;
 					KillTimer(hwnd, 2);
 					if (Check3()) {
+						dir = 4;
+						Turn--;
 						SetTimer(hwnd, 1, 100, NULL);
+					}
+					else {
+						SetTimer(hwnd, 5, 1, NULL);
 					}
 				}
 				break;
@@ -249,6 +318,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case 3: //블럭 내려오는 애니메이션
+			LBSel = false;
 			BlockDown();
 			cnt++;
 			if (cnt == ROWDIS / 5) {
@@ -282,13 +352,68 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (Check3()) {
 					SetTimer(hwnd, 1, 100, NULL);
 				}
-				LBSel = true;
+				else {
+					LBSel = true;
+				}
 			}
 		}
-			break;
+		break;
+		case 5: // 블럭제자리(자리를 바꿨는데 터지지 않을때)
+			switch (dir) {
+			case Left:
+				block[tmpy][tmpx].pos.x -= (BLOCKSPEED - 2);
+				block[sely][selx].pos.x += (BLOCKSPEED - 2);
+				cnt++;
+				if (cnt == ROWDIS / 3) {
+					Object temp = block[tmpy][tmpx];
+					block[tmpy][tmpx] = block[sely][selx];
+					block[sely][selx] = temp;
+					cnt = 0; dir = 4;
+					KillTimer(hwnd, 5);
+				}
+				break;
+			case Right:
+				block[tmpy][tmpx].pos.x += (BLOCKSPEED - 2);
+				block[sely][selx].pos.x -= (BLOCKSPEED - 2);
+				cnt++;
+				if (cnt == ROWDIS / 3) {
+					Object temp = block[tmpy][tmpx];
+					block[tmpy][tmpx] = block[sely][selx];
+					block[sely][selx] = temp;
+					cnt = 0; dir = 4;
+					KillTimer(hwnd, 5);
+				}
+				break;
+			case Up:
+				block[tmpy][tmpx].pos.y -= (BLOCKSPEED - 2);
+				block[sely][selx].pos.y += (BLOCKSPEED - 2);
+				cnt++;
+				if (cnt == COLDIS / 3) {
+					Object temp = block[tmpy][tmpx];
+					block[tmpy][tmpx] = block[sely][selx];
+					block[sely][selx] = temp;
+					cnt = 0; dir = 4;
+					KillTimer(hwnd, 5);
+				}
+				break;
+			case Down:
+				block[tmpy][tmpx].pos.y += (BLOCKSPEED - 2);
+				block[sely][selx].pos.y -= (BLOCKSPEED - 2);
+				cnt++;
+				if (cnt == COLDIS / 3) {
+					Object temp = block[tmpy][tmpx];
+					block[tmpy][tmpx] = block[sely][selx];
+					block[sely][selx] = temp;
+					cnt = 0; dir = 4;
+					KillTimer(hwnd, 5);
+				}
+				break;
+			}
+			LBSel = true;
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
+
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
 		//더블버퍼링 
@@ -304,11 +429,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		PrintBackGround(hdc);
 		PrintBoard(hdc);
+		PrintSkill(hdc);
 		PrintBlock(hdc);
 		PrintScore(hdc);
-		
+		PrintTurn(hdc);
 		if (IsSel) {
 			PrintRect(hdc);
+		}
+		if (skill != -1) {
+			PrintSkillRect(hdc);
 		}
 		//더블버퍼링
 		{
@@ -321,11 +450,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			DeleteDC(MemDC);
 		}
 		
+		//게임종료
 		if (score >= Goalscore) {
+			KillTimer(hwnd, 1);
+			KillTimer(hwnd, 2);
+			KillTimer(hwnd, 3);
+			KillTimer(hwnd, 4);
 			MessageBox(hwnd, "목표달성!", "알림", MB_OK);
+			PostQuitMessage(0);
 		}
 		else if (Turn == 0) {
+			KillTimer(hwnd, 1);
+			KillTimer(hwnd, 2);
+			KillTimer(hwnd, 3);
+			KillTimer(hwnd, 4);
 			MessageBox(hwnd, "목표실패!", "알림", MB_OK);
+			PostQuitMessage(0);
 		}
 		EndPaint(hwnd, &ps);
 		break;
@@ -447,6 +587,18 @@ void PrintBoard(HDC hdc) {
 	}
 	
 }
+void PrintSkill(HDC hdc) {
+	HDC memdc;
+	HBITMAP Oldbit;
+	for (int i = 0; i < 4; ++i) {
+		memdc = CreateCompatibleDC(hdc);
+		Oldbit = (HBITMAP)SelectObject(memdc, Skill[i].bit);
+		TransparentBlt(hdc, 16 + SKILLDIS * i, 710, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, memdc, 0, 0, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, RGB(201, 206, 181));
+		SelectObject(memdc, Oldbit);
+		DeleteObject(memdc);
+		DeleteObject(Oldbit);
+	}
+}
 void PrintBlock(HDC hdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
@@ -518,7 +670,7 @@ void PrintBlock(HDC hdc) {
 	
 }
 void PrintScore(HDC hdc) {
-	TCHAR str[5];
+	TCHAR str[6];
 	HFONT hfont, oldfont;
 	wsprintf(str, "%d", score);
 	TextOut(hdc, 70, 57, str, strlen(str));
@@ -526,6 +678,13 @@ void PrintScore(HDC hdc) {
 	wsprintf(str, "%d", Goalscore);
 	TextOut(hdc, 380, 57, str, strlen(str));
 }
+void PrintTurn(HDC hdc) {
+	TCHAR str[3];
+	HFONT hfont, oldfont;
+	wsprintf(str, "%d", Turn);
+	TextOut(hdc, 230, 57, str, strlen(str));
+}
+
 bool BlockSelect(int mx, int my) {
 	for (int i = 0; i < BLOCKCOL; ++i) {
 		for (int j = 0; j < BLOCKROW; ++j) {
@@ -572,6 +731,168 @@ void PrintRect(HDC hdc) {
 	DeleteObject(hpen);
 }
 
+int SkillSelect(int mx, int my) {
+	for (int i = 0; i < 4; ++i) {
+		if (mx >= 16 + SKILLDIS * i && mx <= 16 + SKILLDIS * i + Skill[i].bitmapSize.x && my >= 710 && my <= 710 + Skill[i].bitmapSize.y) {
+			IsSel = false;
+			return i;
+		}
+	}
+	return -1;
+}
+void PrintSkillRect(HDC hdc) {
+	HPEN hpen, oldpen;
+	hpen = CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
+	oldpen = (HPEN)SelectObject(hdc, hpen);
+	SelectObject(hdc, GetStockObject(NULL_BRUSH));
+	Rectangle(hdc, 16 + SKILLDIS * skill, 710, 16 + SKILLDIS * skill + Skill[skill].bitmapSize.x, 710 + Skill[skill].bitmapSize.y);
+	SelectObject(hdc, oldpen);
+	DeleteObject(hpen);
+}
+void SkillBomb(int mx, int my) {
+	for (int i = 0; i < BLOCKCOL; ++i) {
+		for (int j = 0; j < BLOCKROW; ++j) {
+			if (block[i][j].pos.x <= mx && block[i][j].pos.x + BLOCKSIZE >= mx && block[i][j].pos.y <= my && block[i][j].pos.y + BLOCKSIZE >= my) {
+				if (i == 0 && j== 0) {
+					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i + 1][j + 1].destroy = true; block[i][j + 1].destroy = true;
+					block[i][j].color = 6;      block[i + 1][j].color = 6;      block[i + 1][j + 1].color = 6;      block[i][j + 1].color = 6;
+					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i + 1][j + 1].ani = 0;        block[i][j + 1].ani = 0;
+					score += 40;
+				}
+				else if (i == BLOCKCOL - 1 && j == BLOCKROW - 1) {
+					block[i][j].destroy = true; block[i - 1][j].destroy = true; block[i - 1][j - 1].destroy = true; block[i][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i - 1][j].color = 6;      block[i - 1][j - 1].color = 6;      block[i][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i - 1][j].ani = 0;        block[i - 1][j - 1].ani = 0;        block[i][j - 1].ani = 0;
+					score += 40;
+				}
+				else if (i == 0 && j == BLOCKROW - 1) {
+					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i + 1][j - 1].destroy = true; block[i][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i + 1][j].color = 6;      block[i + 1][j - 1].color = 6;      block[i][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i + 1][j - 1].ani = 0;        block[i][j - 1].ani = 0;
+					score += 40;
+				}
+				else if (i == BLOCKCOL - 1 && j == 0) {
+					block[i][j].destroy = true; block[i - 1][j].destroy = true; block[i - 1][j + 1].destroy = true; block[i][j + 1].destroy = true;
+					block[i][j].color = 6;      block[i - 1][j].color = 6;      block[i - 1][j + 1].color = 6;      block[i][j + 1].color = 6;
+					block[i][j].ani = 0;        block[i - 1][j].ani = 0;        block[i - 1][j + 1].ani = 0;        block[i][j + 1].ani = 0;
+					score += 40;
+				}
+				else if (i == 0) {
+					block[i][j].destroy = true; block[i][j + 1].destroy = true; block[i][j - 1].destroy = true; block[i + 1][j].destroy = true; block[i + 1][j + 1].destroy = true; block[i + 1][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i][j + 1].color = 6;      block[i][j - 1].color = 6;      block[i + 1][j].color = 6;      block[i + 1][j + 1].color = 6;      block[i + 1][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i][j + 1].ani = 0;        block[i][j - 1].ani = 0;        block[i + 1][j].ani = 0;        block[i + 1][j + 1].ani = 0;        block[i + 1][j - 1].ani = 0;
+					score += 60;
+				}
+				else if (i == BLOCKCOL - 1) {
+					block[i][j].destroy = true; block[i][j + 1].destroy = true; block[i][j - 1].destroy = true; block[i - 1][j].destroy = true; block[i - 1][j + 1].destroy = true; block[i - 1][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i][j + 1].color = 6;      block[i][j - 1].color = 6;      block[i - 1][j].color = 6;      block[i - 1][j + 1].color = 6;      block[i - 1][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i][j + 1].ani = 0;        block[i][j - 1].ani = 0;        block[i - 1][j].ani = 0;        block[i - 1][j + 1].ani = 0;        block[i - 1][j - 1].ani = 0;
+					score += 60;
+				}
+				else if (j == 0) {
+					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i - 1][j].destroy = true; block[i][j + 1].destroy = true; block[i + 1][j + 1].destroy = true; block[i - 1][j + 1].destroy = true;
+					block[i][j].color = 6;      block[i + 1][j].color = 6;      block[i - 1][j].color = 6;      block[i][j + 1].color = 6;      block[i + 1][j + 1].color = 6;      block[i - 1][j + 1].color = 6;
+					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i - 1][j].ani = 0;        block[i][j + 1].ani = 0;        block[i + 1][j + 1].ani = 0;        block[i - 1][j + 1].ani = 0;
+					score += 60;
+				}
+				else if (j == BLOCKROW - 1) {
+					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i - 1][j].destroy = true; block[i][j - 1].destroy = true; block[i + 1][j - 1].destroy = true; block[i - 1][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i + 1][j].color = 6;      block[i - 1][j].color = 6;      block[i][j - 1].color = 6;      block[i + 1][j - 1].color = 6;      block[i - 1][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i - 1][j].ani = 0;        block[i][j - 1].ani = 0;        block[i + 1][j - 1].ani = 0;        block[i - 1][j - 1].ani = 0;
+					score += 60;
+				}
+				else {
+					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i - 1][j].destroy = true; block[i][j + 1].destroy = true; block[i][j - 1].destroy = true; block[i - 1][j - 1].destroy = true; block[i - 1][j + 1].destroy = true; block[i + 1][j + 1].destroy = true; block[i + 1][j - 1].destroy = true;
+					block[i][j].color = 6;      block[i + 1][j].color = 6;      block[i - 1][j].color = 6;      block[i][j + 1].color = 6;      block[i][j - 1].color = 6;      block[i - 1][j - 1].color = 6;	    block[i - 1][j + 1].color = 6;	    block[i + 1][j + 1].color = 6;	    block[i + 1][j - 1].color = 6;
+					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i - 1][j].ani = 0;        block[i][j + 1].ani = 0;        block[i][j - 1].ani = 0;        block[i - 1][j - 1].ani = 0;	    block[i - 1][j + 1].ani = 0;	    block[i + 1][j + 1].ani = 0;	    block[i + 1][j - 1].ani = 0;
+					score += 90;
+				}
+			}
+		}
+	}
+	skill = -1;
+	Turn--;
+}
+void SkillSwitch(int mx, int my) {
+	for (int i = 0; i < BLOCKCOL; ++i) {
+		for (int j = 0; j < BLOCKROW; ++j) {
+			if (block[i][j].pos.x <= mx && block[i][j].pos.x + BLOCKSIZE >= mx && block[i][j].pos.y <= my && block[i][j].pos.y + BLOCKSIZE >= my) {
+				if (!IsSel) {
+					selx = j;
+					sely = i;
+					IsSel = true;
+				}
+				else {
+					tmpx = selx;
+					tmpy = sely;
+					selx = j;
+					sely = i;
+					IsSel = false;
+					skill = -1;
+				}
+			}
+		}
+	}
+}
+void SkillTurn() {
+	switch (stage) {
+	case 1:
+		if (Turn <= 15) {
+			Turn += 5;
+		}
+		break;
+	case 2:
+		if (Turn <= 13) {
+			Turn += 5;
+		}
+		break;
+	case 3:
+		if (Turn <= 10) {
+			Turn += 5;
+		}
+		break;
+	}
+	skill = -1;
+}
+void SkillReturn() {
+	switch (stage) {
+	case 1:
+		if (Turn < 20) {
+			for (int i = 0; i < BLOCKCOL; ++i) {
+				for (int j = 0; j < BLOCKROW; ++j) {
+					block[i][j] = returnblock[i][j];
+				}
+			}
+			score = returnscore;
+			Turn--;
+		}
+		break;
+	case 2:
+		if (Turn < 18) {
+			for (int i = 0; i < BLOCKCOL; ++i) {
+				for (int j = 0; j < BLOCKROW; ++j) {
+					block[i][j] = returnblock[i][j];
+				}
+			}
+			score = returnscore;
+			Turn--;
+		}
+		break;
+	case 3:
+		if (Turn < 15) {
+			for (int i = 0; i < BLOCKCOL; ++i) {
+				for (int j = 0; j < BLOCKROW; ++j) {
+					block[i][j] = returnblock[i][j];
+				}
+			}
+			score = returnscore;
+			Turn--;
+		}
+		break;
+	}
+	skill = -1;
+}
+
 bool Check3() {
 	bool check{ false };
 	//가로확인
@@ -591,7 +912,7 @@ bool Check3() {
 						block[i][j + 1].color = 6;
 						block[i][j + 1].ani = 0;
 						destorynum++;
-						break;
+						//break;
 					}
 					if (tempcolor == block[i + 1][j].color && tempcolor == block[i + 2][j].color) {
 						//가로세로(위) 모두 3개이상
@@ -640,10 +961,55 @@ bool Check3() {
 					j++;
 
 				}
+				int tempcolor = block[i][j].color;
 				block[i][j].destroy = true;
 				block[i][j].color = 6;
 				block[i][j].ani = 0;
 				destorynum++;
+				if (tempcolor == block[i + 1][j].color && tempcolor == block[i + 2][j].color) {
+					//가로세로(위) 모두 3개이상
+					int temp = i + 1;
+					while (block[temp][j].color == block[temp + 1][j].color) {
+						block[temp][j].destroy = true;
+						block[temp][j].color = 6;
+						block[temp][j].ani = 0;
+						destorynum++;
+						if (temp == BLOCKCOL - 2) {
+							block[temp + 1][j].destroy = true;
+							block[temp + 1][j].color = 6;
+							block[temp + 1][j].ani = 0;
+							destorynum++;
+							break;
+						}
+						temp++;
+					}
+					block[temp][j].destroy = true;
+					block[temp][j].color = 6;
+					block[temp][j].ani = 0;
+					destorynum++;
+				}
+				if (i >= 2 && tempcolor == block[i - 1][j].color && tempcolor == block[i - 2][j].color) {
+					//가로세로(아래) 모두 3개이상
+					int temp = i - 1;
+					while (block[temp][j].color == block[temp - 1][j].color) {
+						block[temp][j].destroy = true;
+						block[temp][j].color = 6;
+						block[temp][j].ani = 0;
+						destorynum++;
+						if (temp == 1) {
+							block[temp - 1][j].destroy = true;
+							block[temp - 1][j].color = 6;
+							block[temp - 1][j].ani = 0;
+							destorynum++;
+							break;
+						}
+						temp--;
+					}
+					block[temp][j].destroy = true;
+					block[temp][j].color = 6;
+					block[temp][j].ani = 0;
+					destorynum++;
+				}
 				check = true;
 			}
 		}
