@@ -606,7 +606,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case IDC_RETRY:
 			Reset();
-			InvalidateRect(hWnd, NULL, FALSE);
+			DestroyWindow(hWnd);
 			break;
 		}
 		break;
@@ -615,17 +615,6 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps;
 		hdc = BeginPaint(hWnd, &ps);
 
-		//더블버퍼링 
-		{
-			MemDC = CreateCompatibleDC(hdc);
-			BackBit = CreateCompatibleBitmap(hdc, WindowRect.right, WindowRect.bottom);
-			oldBackBit = (HBITMAP)SelectObject(MemDC, BackBit);
-			PatBlt(MemDC, 0, 0, WindowRect.right, WindowRect.bottom, WHITENESS);
-			tmpDC = hdc;
-			hdc = MemDC;
-			MemDC = tmpDC;
-		}
-
 		memdc = CreateCompatibleDC(hdc);
 		oldbit = (HBITMAP)SelectObject(memdc, chbackground.bit);
 		TransparentBlt(hdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206 , 181));
@@ -633,23 +622,12 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		DeleteObject(memdc);
 		DeleteObject(oldbit);
 
-		//더블버퍼링
-		{
-			tmpDC = hdc;
-			hdc = MemDC;
-			MemDC = tmpDC;
-			BitBlt(hdc, 0, 0, WindowRect.right, WindowRect.bottom, MemDC, 0, 0, SRCCOPY);
-			SelectObject(MemDC, oldBackBit);
-			DeleteObject(BackBit);
-			DeleteDC(MemDC);
-		}
-
 		EndPaint(hWnd, &ps);
 		break;
 	}
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		DestroyWindow(hWnd);
 		break;
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);

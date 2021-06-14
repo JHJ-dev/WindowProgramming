@@ -1,6 +1,10 @@
 ﻿  GameScene.cpp
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(855,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(855,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(863,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(863,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
-  KirbySmash.vcxproj -> D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(585,25): warning C4101: 'tmpDC' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(585,18): warning C4101: 'MemDC' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(586,27): warning C4101: 'oldBackBit' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(586,18): warning C4101: 'BackBit' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(830,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(830,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(838,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(838,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
+  KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
