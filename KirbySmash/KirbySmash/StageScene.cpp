@@ -71,7 +71,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		stageButton[2].drawPos = { 520, 395 };
 		stageButton[2].centerPos = { stageButton[2].drawPos.x + bmp.bmWidth / 2, stageButton[2].drawPos.y + bmp.bmHeight / 2 };
 		//Ä¿ºñ
-		kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "walk.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightwalk.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		GetObject(kirby.hBitmap, sizeof(BITMAP), &bmp);
 		kirby.bitmapSize = { bmp.bmWidth, bmp.bmHeight };
 		kirby.centerPos = { stage12[0].x, stage12[0].y - bmp.bmHeight / 2 };
@@ -134,13 +134,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (kirby.aniIndex == 11) kirby.aniIndex = 0;
 			}
 		}
-
+		if(kirby.Movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightwalk.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		else kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "leftwalk.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		oldBitmap2 = (HBITMAP)SelectObject(memdc2, kirby.hBitmap);
 		kirby.drawPos = { kirby.centerPos.x - kirby.bitmapSize.y / 2, kirby.centerPos.y - kirby.bitmapSize.y / 2 };
 		TransparentBlt(memdc1, kirby.drawPos.x - cx, kirby.drawPos.y - cy, kirby.bitmapSize.y, kirby.bitmapSize.y, memdc2, kirby.aniIndex * kirby.bitmapSize.y, 0, kirby.bitmapSize.y, kirby.bitmapSize.y, kirbyRGB);
 
-		//if (reverseX) StretchBlt(hdc, drawSize.x, 0, -drawSize.x, drawSize.y, memdc, bringStart.x, bringStart.y, bringSize.x, bringSize.y, SRCCOPY);
-		//else StretchBlt(hdc, 0, 0, drawSize.x, drawSize.y, memdc, bringStart.x, bringStart.y, bringSize.x, bringSize.y, SRCCOPY);
 		SelectObject(memdc2, oldBitmap2);
 		DeleteDC(memdc2);
 		SelectObject(memdc1, oldBitmap1);

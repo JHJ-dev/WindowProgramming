@@ -1,3 +1,6 @@
-﻿  StageScene.cpp
-D:\WindowProgramming\KirbySmash\KirbySmash\StageScene.cpp(211,12): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+﻿  GameScene.cpp
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(718,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(718,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(727,8): warning C4101: 'hfont' :참조되지 않은 지역 변수입니다.
+D:\WindowProgramming\KirbySmash\KirbySmash\GameScene.cpp(727,15): warning C4101: 'oldfont' :참조되지 않은 지역 변수입니다.
   KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe

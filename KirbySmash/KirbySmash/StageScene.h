@@ -63,7 +63,7 @@ struct Character {
 	POINT drawPos;		//그릴 위치
 	POINT centerPos;	//중앙 위치
 	BOOL Move;			//캐릭터 이동
-	int Movedir;		//캐릭터 이동 방향
+	int Movedir = 1;		//캐릭터 이동 방향
 	int moveIndex;		//이동 좌표 인덱스
 	int aniIndex;		//캐릭터 애니메이션 인덱스
 };

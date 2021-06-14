@@ -22,6 +22,8 @@
 #define ROWDIS 45 //블럭간 거리
 #define COLDIS 45 //블럭간 거리
 #define SKILLDIS 123 //스킬블럭간 거리
+#define KIRBYSIZE 100
+
 std::random_device rd;
 std::mt19937 engine(rd());
 
@@ -31,6 +33,8 @@ LPCTSTR lpszWindowName = "Window Program";
 
 RECT WindowRect; //window크기
 
+COLORREF kirbyRGB = RGB(100, 100, 100);
+
 static int Goalscore, Turn;
 static bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
 static int selx, sely; //선택한 블럭 인덱스
@@ -38,6 +42,7 @@ static int tmpx, tmpy, cnt; //블럭자리 바꿀때
 static int dir;
 static int score, destorynum;
 static int skill, returnscore;
+static int selectedSkill;
 
 enum {
 	Left = 0, Right, Up, Down = 3
@@ -45,6 +50,8 @@ enum {
 enum {
 	Pink = 0, Blue, Green, Gray, Purple, Orange = 5
 };
+
+int skillAni[4] = { 6, 11, 5, 6};
 
 struct Object{
 	POINT pos;
@@ -61,6 +68,16 @@ struct Bit {
 Bit Background;
 Bit Block[7];
 Bit Skill[4];
+struct Kirby {
+	HBITMAP hBitmap;
+	POINT bitmapSize;	//비트맵 크기
+	POINT Pos;			//그릴 위치
+	BOOL Move;			//캐릭터 이동
+	int moveCount;		//캐릭터 이동 횟수
+	int movedir;		//캐릭터 이동 방향
+	int aniIndex;		//캐릭터 애니메이션 인덱스
+};
+Kirby kirby;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 bool CheckStart();
@@ -83,5 +100,6 @@ int SkillSelect(int mx, int my);
 void PrintSkillRect(HDC hdc);
 void SkillBomb(int mx, int my);
 void SkillSwitch(int mx, int my);
+void PrintKirby(HDC hdc);
 void SkillTurn();
 void SkillReturn();

@@ -108,6 +108,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetObject(Skill[0].bit, sizeof(BITMAP), &bmp);
 			Skill[3].bitmapSize.x = bmp.bmWidth;
 			Skill[3].bitmapSize.y = bmp.bmHeight;
+
+			kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightroll.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+			GetObject(kirby.hBitmap, sizeof(BITMAP), &bmp);
+			kirby.bitmapSize = { bmp.bmWidth,  bmp.bmHeight };
+			kirby.Pos = { 200, 60 };
+			kirby.movedir = 1;
 		}
 
 		//스테이지정보
@@ -162,12 +168,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (LBSel) {
 			if (skill != -1) { //스킬이 눌려있을때
 				switch (skill) {
-				case 0:
+				case 0:	//폭탄(공격)
 					SkillBomb(mx, my);
 					SetTimer(hwnd, 1, 100, NULL);
+					SetTimer(hwnd, 6, 200, NULL);
+					kirby.Move = true;
+					kirby.moveCount = 0;
+					selectedSkill = 0;
 					break;
-				case 1:
+				case 1:	//스위치(구르기)
 					SkillSwitch(mx, my);
+					SetTimer(hwnd, 6, 100, NULL);
+					kirby.Move = true;
+					kirby.moveCount = 0;
+					selectedSkill = 1;
 					break;
 				default:
 					skill = -1;
@@ -193,10 +207,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (skill == -1) {
 				skill = SkillSelect(mx, my);
 			}
-			if (skill == 2) {
+			if (skill == 2) {		//턴증가(빨아들이기)
+				SetTimer(hwnd, 6, 200, NULL);
+				kirby.Move = true;
+				kirby.moveCount = 0;
+				selectedSkill = 2;
 				SkillTurn();
 			}
-			else if (skill == 3) {
+			else if (skill == 3) {	//리버스(전화)
+				SetTimer(hwnd, 6, 200, NULL);
+				kirby.Move = true;
+				kirby.moveCount = 0;
+				selectedSkill = 3;
 				SkillReturn();
 			}
 		}
@@ -409,8 +431,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				break;
 			}
+			break;
+		case 6:	//캐릭터 애니메이션
+			if (kirby.Move) {
+				if (kirby.aniIndex < skillAni[selectedSkill]) {
+					kirby.aniIndex++;
+					if(kirby.movedir == 1) kirby.Pos.x += 10;
+					else kirby.Pos.x -= 10;
+					if (kirby.aniIndex == skillAni[selectedSkill] - 1) {
+						kirby.moveCount++;
+						kirby.aniIndex = 0;
+						if(kirby.moveCount != 2) kirby.movedir *= -1;
+					}
+					if(kirby.moveCount == 2) {
+						kirby.Move = false;
+						KillTimer(hwnd, 6);
+					}
+				}
+			}
+			break;
 			LBSel = true;
 		}
+		
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 
@@ -433,6 +475,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		PrintBlock(hdc);
 		PrintScore(hdc);
 		PrintTurn(hdc);
+		PrintKirby(hdc);
 		if (IsSel) {
 			PrintRect(hdc);
 		}
@@ -562,6 +605,7 @@ void PrintBackGround(HDC hdc) {
 	DeleteObject(memdc);
 	DeleteObject(Oldbit);
 }
+
 void PrintBoard(HDC hdc) {
 	HBRUSH hbrush, oldbrush;
 	HPEN hpen, oldpen;
@@ -683,6 +727,35 @@ void PrintTurn(HDC hdc) {
 	HFONT hfont, oldfont;
 	wsprintf(str, "%d", Turn);
 	TextOut(hdc, 230, 57, str, strlen(str));
+}
+
+void PrintKirby(HDC hdc) {
+	HDC memdc;
+	HBITMAP Oldbit;
+	memdc = CreateCompatibleDC(hdc);
+	switch (selectedSkill) {
+	case 0:
+		if (kirby.movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightattack.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		else kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "leftattack.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		break;
+	case 1:
+		if (kirby.movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightroll.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		else kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "leftroll.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		break;
+	case 2:
+		if (kirby.movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightinhale.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		else kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "leftinhale.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		break;
+	case 3:
+		if (kirby.movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightcall.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		else kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "leftcall.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		break;
+	}
+	Oldbit = (HBITMAP)SelectObject(memdc, kirby.hBitmap);
+	TransparentBlt(hdc, kirby.Pos.x, kirby.Pos.y, KIRBYSIZE, KIRBYSIZE, memdc, kirby.aniIndex * kirby.bitmapSize.y, 0, kirby.bitmapSize.y, kirby.bitmapSize.y, kirbyRGB);
+	SelectObject(memdc, Oldbit);
+	DeleteObject(memdc);
+	DeleteObject(Oldbit);
 }
 
 bool BlockSelect(int mx, int my) {
