@@ -18,7 +18,7 @@
 #define BLOCKROW 10
 #define BLOCKCOL 12
 #define BLOCKSIZE 36
-#define BLOCKSPEED 5
+#define BLOCKSPEED 9
 #define ROWDIS 45 //블럭간 거리
 #define COLDIS 45 //블럭간 거리
 #define SKILLDIS 123 //스킬블럭간 거리
@@ -43,7 +43,8 @@ static int dir;
 static int score, destorynum;
 static int skill, returnscore;
 static int selectedSkill;
-
+static HWND play, chexit, retry; //차일드 윈도우
+static bool pause; //일시정지
 enum {
 	Left = 0, Right, Up, Down = 3
 };
@@ -68,6 +69,7 @@ struct Bit {
 Bit Background;
 Bit Block[7];
 Bit Skill[4];
+Bit Child[3];
 struct Kirby {
 	HBITMAP hBitmap;
 	POINT bitmapSize;	//비트맵 크기
@@ -80,6 +82,7 @@ struct Kirby {
 Kirby kirby;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 bool CheckStart();
 void PrintBackGround(HDC hdc); //배경출력
 void PrintBoard(HDC hdc); 
@@ -103,3 +106,4 @@ void SkillSwitch(int mx, int my);
 void PrintKirby(HDC hdc);
 void SkillTurn();
 void SkillReturn();
+void Reset();

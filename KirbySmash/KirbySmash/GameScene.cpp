@@ -22,6 +22,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	WndClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);				//윈도우 캡션 아이콘
 	RegisterClassEx(&WndClass);
 
+	WndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	WndClass.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+	WndClass.lpszClassName = "ChildClass";
+	WndClass.lpfnWndProc = ChildProc;
+	RegisterClassEx(&WndClass);
+
 	hWnd = CreateWindow(lpszClass, lpszWindowName, WS_SYSMENU, 0, 0, WIDTH, HEIGHT, NULL, (HMENU)NULL, hInstance, NULL);
 	//CreateWindow(윈도우 클래스 이름, 윈도우 타이틀 이름, 윈도우 스타일, x, y, 가로, 세로, 부모 윈도우 핸들, 메뉴 핸들, 응용 프로그램 인스턴스, 생성 윈도우 정보);
 	ShowWindow(hWnd, nCmdShow);	//윈도우 화면 출력
@@ -37,16 +43,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	static HWND child_hWnd;
 	HDC hdc, MemDC, tmpDC;
 	PAINTSTRUCT ps;
 	BITMAP bmp;
-	HBITMAP BackBit, oldBackBit;
-	
+	HBITMAP BackBit, oldBackBit, hbit;
 	switch (uMsg) {
 	case WM_CREATE:
 		cnt = 0;
 		skill = -1;
-		LBSel = true;
+		LBSel = true; pause = false;
 		GetClientRect(hwnd, &WindowRect);
 		//비트맵 로드, 크기저장
 		{
@@ -114,6 +120,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			kirby.bitmapSize = { bmp.bmWidth,  bmp.bmHeight };
 			kirby.Pos = { 200, 60 };
 			kirby.movedir = 1;
+			selectedSkill = 2;
 		}
 
 		//스테이지정보
@@ -161,301 +168,352 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetTimer(hwnd, 1, 500, NULL);
 		while (CheckStart());
 		break;
+
+	case WM_KEYDOWN:
+		switch (wParam) {
+		case VK_ESCAPE:
+			if (!pause) {
+				pause = true;
+				child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
+					90, 240, 300, 318, hwnd, NULL, g_hInst, NULL);
+				play = CreateWindow("button", "Play", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+					75, 60, 150, 57, child_hWnd, (HMENU)IDC_PLAY, g_hInst, NULL);
+				hbit = (HBITMAP)LoadImage(g_hInst, "continue.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+				SendMessage(play, BM_SETIMAGE, 0, (LPARAM)hbit);
+
+				chexit = CreateWindow("button", "Exit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+					75, 137, 150, 57, child_hWnd, (HMENU)IDC_EXIT, g_hInst, NULL);
+				hbit = (HBITMAP)LoadImage(g_hInst, "exit.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+				SendMessage(chexit, BM_SETIMAGE, 0, (LPARAM)hbit);
+
+				retry = CreateWindow("button", "Retry", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+					75, 214, 150, 57, child_hWnd, (HMENU)IDC_RETRY, g_hInst, NULL);
+				hbit = (HBITMAP)LoadImage(g_hInst, "retry.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+				SendMessage(retry, BM_SETIMAGE, 0, (LPARAM)hbit);
+			}
+			else {
+				DestroyWindow(child_hWnd);
+				pause = false;
+			}
+			break;
+		}
+		InvalidateRect(hwnd, NULL, FALSE);
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_PLAY:
+			DestroyWindow(child_hWnd);
+			//SendMessage(child_hWnd, uMsg, IDC_PLAY, lParam); 
+			break;
+		case IDC_EXIT:	
+			SendMessage(child_hWnd, uMsg, IDC_EXIT, lParam);
+			break;
+		case IDC_RETRY:
+			SetTimer(hwnd, 1, 500, NULL);
+			InvalidateRect(hwnd, NULL, FALSE);
+			break;
+		}
+		break;
 	case WM_LBUTTONDOWN:
 	{
-		int mx = LOWORD(lParam);
-		int my = HIWORD(lParam);
-		if (LBSel) {
-			if (skill != -1) { //스킬이 눌려있을때
-				switch (skill) {
-				case 0:	//폭탄(공격)
-					SkillBomb(mx, my);
-					SetTimer(hwnd, 1, 100, NULL);
+		if (!pause) {
+			int mx = LOWORD(lParam);
+			int my = HIWORD(lParam);
+			if (LBSel) {
+				if (skill != -1) { //스킬이 눌려있을때
+					switch (skill) {
+					case 0:	//폭탄(공격)
+						SkillBomb(mx, my);
+						SetTimer(hwnd, 1, 100, NULL);
+						SetTimer(hwnd, 6, 200, NULL);
+						kirby.Move = true;
+						kirby.moveCount = 0;
+						selectedSkill = 0;
+						break;
+					case 1:	//스위치(구르기)
+						SkillSwitch(mx, my);
+						SetTimer(hwnd, 6, 100, NULL);
+						kirby.Move = true;
+						kirby.moveCount = 0;
+						selectedSkill = 1;
+						break;
+					default:
+						skill = -1;
+						break;
+					}
+				}
+				else if (BlockSelect(mx, my)) {
+					if (IsSel) {
+						IsSel = false;
+						LBSel = false;
+						for (int i = 0; i < BLOCKCOL; ++i) {
+							for (int j = 0; j < BLOCKROW; ++j) {
+								returnblock[i][j] = block[i][j];
+								returnscore = score;
+							}
+						}
+						SetTimer(hwnd, 2, 1, NULL); //블럭 자리바꾸기 애니메이션
+					}
+					else {
+						IsSel = true;
+					}
+				}
+				if (skill == -1) {
+					skill = SkillSelect(mx, my);
+				}
+				if (skill == 2) {		//턴증가(빨아들이기)
 					SetTimer(hwnd, 6, 200, NULL);
 					kirby.Move = true;
 					kirby.moveCount = 0;
-					selectedSkill = 0;
-					break;
-				case 1:	//스위치(구르기)
-					SkillSwitch(mx, my);
-					SetTimer(hwnd, 6, 100, NULL);
+					selectedSkill = 2;
+					SkillTurn();
+				}
+				else if (skill == 3) {	//리버스(전화)
+					SetTimer(hwnd, 6, 200, NULL);
 					kirby.Move = true;
 					kirby.moveCount = 0;
-					selectedSkill = 1;
-					break;
-				default:
-					skill = -1;
-					break;
+					selectedSkill = 3;
+					SkillReturn();
 				}
-			}
-			else if (BlockSelect(mx, my)) {
-				if (IsSel) {
-					IsSel = false;
-					LBSel = false;
-					for (int i = 0; i < BLOCKCOL; ++i) {
-						for (int j = 0; j < BLOCKROW; ++j) {
-							returnblock[i][j] = block[i][j];
-							returnscore = score;
-						}
-					}
-					SetTimer(hwnd, 2, 1, NULL); //블럭 자리바꾸기 애니메이션
-				}
-				else {
-					IsSel = true;
-				}
-			}
-			if (skill == -1) {
-				skill = SkillSelect(mx, my);
-			}
-			if (skill == 2) {		//턴증가(빨아들이기)
-				SetTimer(hwnd, 6, 200, NULL);
-				kirby.Move = true;
-				kirby.moveCount = 0;
-				selectedSkill = 2;
-				SkillTurn();
-			}
-			else if (skill == 3) {	//리버스(전화)
-				SetTimer(hwnd, 6, 200, NULL);
-				kirby.Move = true;
-				kirby.moveCount = 0;
-				selectedSkill = 3;
-				SkillReturn();
 			}
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	}
 	case WM_TIMER:
-		switch (wParam) {
-		case 1: //가만히 있을 때 애니메이션
-			for (int i = 0; i < BLOCKCOL; ++i) {
-				for (int j = 0; j < BLOCKROW; ++j) {
-					if (!block[i][j].destroy) {
-						block[i][j].ani++;
-						if (block[i][j].ani == 4) {
-							block[i][j].ani = 0;
+		if (!pause) {
+			switch (wParam) {
+			case 1: //가만히 있을 때 애니메이션
+				for (int i = 0; i < BLOCKCOL; ++i) {
+					for (int j = 0; j < BLOCKROW; ++j) {
+						if (!block[i][j].destroy) {
+							block[i][j].ani++;
+							if (block[i][j].ani == 4) {
+								block[i][j].ani = 0;
+							}
 						}
-					}
-					else {
-						//터지는 애니메이션
-						block[i][j].ani++;
-						if (block[i][j].ani == 8) {
-							block[i][j].ani = 0;
-							block[i][j].destroy = false;
-							block[i][j].color = -1;
-							LBSel = false;
-							SetTimer(hwnd, 1, 500, NULL);
-							SetTimer(hwnd, 3, 1, NULL);
-						}
-					}
-				}
-			}
-			break;
-		case 2: //블럭 자리바꾸기 애니메이션
-			switch (dir) {
-			case Left:
-				block[tmpy][tmpx].pos.x -= (BLOCKSPEED - 2);
-				block[sely][selx].pos.x += (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == ROWDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0;
-					KillTimer(hwnd, 2);
-					if (Check3()) {
-						dir = 4;
-						Turn--;
-						SetTimer(hwnd, 1, 100, NULL);
-					}
-					else {
-						SetTimer(hwnd, 5, 1, NULL);
-					}
-				}
-				break;
-			case Right:
-				block[tmpy][tmpx].pos.x += (BLOCKSPEED - 2);
-				block[sely][selx].pos.x -= (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == ROWDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0;
-					KillTimer(hwnd, 2);
-					if (Check3()) {
-						dir = 4;
-						Turn--;
-						SetTimer(hwnd, 1, 100, NULL);
-					}
-					else {
-						SetTimer(hwnd, 5, 1, NULL);
-					}
-				}
-				break;
-			case Up:
-				block[tmpy][tmpx].pos.y -= (BLOCKSPEED - 2);
-				block[sely][selx].pos.y += (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == COLDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0;
-					KillTimer(hwnd, 2);
-					if (Check3()) {
-						dir = 4;
-						Turn--;
-						SetTimer(hwnd, 1, 100, NULL);
-					}
-					else {
-						SetTimer(hwnd, 5, 1, NULL);
-					}
-				}
-				break;
-			case Down:
-				block[tmpy][tmpx].pos.y += (BLOCKSPEED - 2);
-				block[sely][selx].pos.y -= (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == COLDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0;
-					KillTimer(hwnd, 2);
-					if (Check3()) {
-						dir = 4;
-						Turn--;
-						SetTimer(hwnd, 1, 100, NULL);
-					}
-					else {
-						SetTimer(hwnd, 5, 1, NULL);
-					}
-				}
-				break;
-			case 4:
-				LBSel = true;
-				KillTimer(hwnd, 2);
-				break;
-			}
-			break;
-		case 3: //블럭 내려오는 애니메이션
-			LBSel = false;
-			BlockDown();
-			cnt++;
-			if (cnt == ROWDIS / 5) {
-				for (int i = 0; i < BLOCKROW; ++i) {
-					for (int j = 0; j < BLOCKCOL; ++j) {
-						if (CheckChange(i, j) && block[j][i].color != -1) {
-							BlockChange(i, j);
+						else {
+							//터지는 애니메이션
+							block[i][j].ani++;
+							if (block[i][j].ani == 8) {
+								block[i][j].ani = 0;
+								block[i][j].destroy = false;
+								block[i][j].color = -1;
+								LBSel = false;
+								KillTimer(hwnd, 1);
+								SetTimer(hwnd, 3, 1, NULL);
+
+							}
 						}
 					}
 				}
-				if (!CheckDown()) {
-					SetTimer(hwnd, 4, 1, NULL);
-					KillTimer(hwnd, 3);
-				}
-				cnt = 0;
-			}
-			break;
-		case 4: //새로운 블럭만들기
-		{
-			bool timer3{ false };
-			NewBlock();
-			KillTimer(hwnd, 4);
-			for (int i = 0; i < BLOCKROW; ++i) {
-				if (CheckDown()) {
-					SetTimer(hwnd, 3, 1, NULL);
-					timer3 = true;
+				break;
+			case 2: //블럭 자리바꾸기 애니메이션
+				switch (dir) {
+				case Left:
+					block[tmpy][tmpx].pos.x -= (BLOCKSPEED - 6);
+					block[sely][selx].pos.x += (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == ROWDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0;
+						KillTimer(hwnd, 2);
+						if (Check3()) {
+							dir = 4;
+							Turn--;
+							SetTimer(hwnd, 1, 100, NULL);
+						}
+						else {
+							SetTimer(hwnd, 5, 1, NULL);
+						}
+					}
+					break;
+				case Right:
+					block[sely][selx].pos.x -= (BLOCKSPEED - 6);
+					block[tmpy][tmpx].pos.x += (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == ROWDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0;
+						KillTimer(hwnd, 2);
+						if (Check3()) {
+							dir = 4;
+							Turn--;
+							SetTimer(hwnd, 1, 100, NULL);
+						}
+						else {
+							SetTimer(hwnd, 5, 1, NULL);
+						}
+					}
+					break;
+				case Up:
+					block[tmpy][tmpx].pos.y -= (BLOCKSPEED - 6);
+					block[sely][selx].pos.y += (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == COLDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0;
+						KillTimer(hwnd, 2);
+						if (Check3()) {
+							dir = 4;
+							Turn--;
+							SetTimer(hwnd, 1, 100, NULL);
+						}
+						else {
+							SetTimer(hwnd, 5, 1, NULL);
+						}
+					}
+					break;
+				case Down:
+					block[tmpy][tmpx].pos.y += (BLOCKSPEED - 6);
+					block[sely][selx].pos.y -= (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == COLDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0;
+						KillTimer(hwnd, 2);
+						if (Check3()) {
+							dir = 4;
+							Turn--;
+							SetTimer(hwnd, 1, 100, NULL);
+						}
+						else {
+							SetTimer(hwnd, 5, 1, NULL);
+						}
+					}
+					break;
+				case 4:
+					LBSel = true;
+					KillTimer(hwnd, 2);
 					break;
 				}
-			}
-			if (!timer3) {
-				if (Check3()) {
-					SetTimer(hwnd, 1, 100, NULL);
-				}
-				else {
-					LBSel = true;
-				}
-			}
-		}
-		break;
-		case 5: // 블럭제자리(자리를 바꿨는데 터지지 않을때)
-			switch (dir) {
-			case Left:
-				block[tmpy][tmpx].pos.x -= (BLOCKSPEED - 2);
-				block[sely][selx].pos.x += (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == ROWDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0; dir = 4;
-					KillTimer(hwnd, 5);
-				}
 				break;
-			case Right:
-				block[tmpy][tmpx].pos.x += (BLOCKSPEED - 2);
-				block[sely][selx].pos.x -= (BLOCKSPEED - 2);
+			case 3: //블럭 내려오는 애니메이션
+				LBSel = false;
+				BlockDown();
 				cnt++;
-				if (cnt == ROWDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0; dir = 4;
-					KillTimer(hwnd, 5);
-				}
-				break;
-			case Up:
-				block[tmpy][tmpx].pos.y -= (BLOCKSPEED - 2);
-				block[sely][selx].pos.y += (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == COLDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0; dir = 4;
-					KillTimer(hwnd, 5);
-				}
-				break;
-			case Down:
-				block[tmpy][tmpx].pos.y += (BLOCKSPEED - 2);
-				block[sely][selx].pos.y -= (BLOCKSPEED - 2);
-				cnt++;
-				if (cnt == COLDIS / 3) {
-					Object temp = block[tmpy][tmpx];
-					block[tmpy][tmpx] = block[sely][selx];
-					block[sely][selx] = temp;
-					cnt = 0; dir = 4;
-					KillTimer(hwnd, 5);
-				}
-				break;
-			}
-			break;
-		case 6:	//캐릭터 애니메이션
-			if (kirby.Move) {
-				if (kirby.aniIndex < skillAni[selectedSkill]) {
-					kirby.aniIndex++;
-					if(kirby.movedir == 1) kirby.Pos.x += 10;
-					else kirby.Pos.x -= 10;
-					if (kirby.aniIndex == skillAni[selectedSkill] - 1) {
-						kirby.moveCount++;
-						kirby.aniIndex = 0;
-						if(kirby.moveCount != 2) kirby.movedir *= -1;
+				if (cnt == ROWDIS / 9) {
+					for (int i = 0; i < BLOCKROW; ++i) {
+						for (int j = 0; j < BLOCKCOL; ++j) {
+							if (CheckChange(i, j) && block[j][i].color != -1) {
+								BlockChange(i, j);
+							}
+						}
 					}
-					if(kirby.moveCount == 2) {
-						kirby.Move = false;
-						KillTimer(hwnd, 6);
+					if (!CheckDown()) {
+						SetTimer(hwnd, 4, 1, NULL);
+						KillTimer(hwnd, 3);
+					}
+					cnt = 0;
+				}
+				break;
+			case 4: //새로운 블럭만들기
+			{
+				bool timer3{ false };
+				NewBlock();
+				KillTimer(hwnd, 4);
+				for (int i = 0; i < BLOCKROW; ++i) {
+					if (CheckDown()) {
+						SetTimer(hwnd, 3, 1, NULL);
+						timer3 = true;
+						break;
+					}
+				}
+				if (!timer3) {
+					if (Check3()) {
+						SetTimer(hwnd, 1, 100, NULL);
+					}
+					else {
+						LBSel = true;
+						SetTimer(hwnd, 1, 500, NULL);
 					}
 				}
 			}
 			break;
-			LBSel = true;
+			case 5: // 블럭제자리(자리를 바꿨는데 터지지 않을때)
+				switch (dir) {
+				case Left:
+					block[tmpy][tmpx].pos.x -= (BLOCKSPEED - 6);
+					block[sely][selx].pos.x += (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == ROWDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0; dir = 4;
+						KillTimer(hwnd, 5);
+					}
+					break;
+				case Right:
+					block[tmpy][tmpx].pos.x += (BLOCKSPEED - 6);
+					block[sely][selx].pos.x -= (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == ROWDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0; dir = 4;
+						KillTimer(hwnd, 5);
+					}
+					break;
+				case Up:
+					block[tmpy][tmpx].pos.y -= (BLOCKSPEED - 6);
+					block[sely][selx].pos.y += (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == COLDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0; dir = 4;
+						KillTimer(hwnd, 5);
+					}
+					break;
+				case Down:
+					block[tmpy][tmpx].pos.y += (BLOCKSPEED - 6);
+					block[sely][selx].pos.y -= (BLOCKSPEED - 6);
+					cnt++;
+					if (cnt == COLDIS / 3) {
+						Object temp = block[tmpy][tmpx];
+						block[tmpy][tmpx] = block[sely][selx];
+						block[sely][selx] = temp;
+						cnt = 0; dir = 4;
+						KillTimer(hwnd, 5);
+					}
+					break;
+				}
+				LBSel = true;
+				break;
+			case 6:	//캐릭터 애니메이션
+				if (kirby.Move) {
+					if (kirby.aniIndex < skillAni[selectedSkill]) {
+						kirby.aniIndex++;
+						if (kirby.movedir == 1) kirby.Pos.x += 10;
+						else kirby.Pos.x -= 10;
+						if (kirby.aniIndex == skillAni[selectedSkill] - 1) {
+							kirby.moveCount++;
+							kirby.aniIndex = 0;
+							if (kirby.moveCount != 2) kirby.movedir *= -1;
+						}
+						if (kirby.moveCount == 2) {
+							kirby.Move = false;
+							KillTimer(hwnd, 6);
+						}
+					}
+				}
+				break;
+				LBSel = true;
+			}
 		}
-		
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
-
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
 		//더블버퍼링 
@@ -520,6 +578,82 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+	static Bit chbackground;
+	BITMAP bmp;
+	HDC memdc, hdc, MemDC, tmpDC;
+	HBITMAP oldbit, BackBit, oldBackBit;
+
+	switch (uMsg)
+	{
+	case WM_CREATE:
+	{
+		chbackground.bit = (HBITMAP)LoadImage(g_hInst, "pause.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(chbackground.bit, sizeof(BITMAP), &bmp);
+		chbackground.bitmapSize.x = bmp.bmWidth;
+		chbackground.bitmapSize.y = bmp.bmHeight;
+	}
+	break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_PLAY:
+			pause = false;
+			DestroyWindow(hWnd);
+			break;
+		case IDC_EXIT:
+			DestroyWindow(hWnd);
+			break;
+		case IDC_RETRY:
+			Reset();
+			InvalidateRect(hWnd, NULL, FALSE);
+			break;
+		}
+		break;
+	case WM_PAINT:
+	{
+		PAINTSTRUCT ps;
+		hdc = BeginPaint(hWnd, &ps);
+
+		//더블버퍼링 
+		{
+			MemDC = CreateCompatibleDC(hdc);
+			BackBit = CreateCompatibleBitmap(hdc, WindowRect.right, WindowRect.bottom);
+			oldBackBit = (HBITMAP)SelectObject(MemDC, BackBit);
+			PatBlt(MemDC, 0, 0, WindowRect.right, WindowRect.bottom, WHITENESS);
+			tmpDC = hdc;
+			hdc = MemDC;
+			MemDC = tmpDC;
+		}
+
+		memdc = CreateCompatibleDC(hdc);
+		oldbit = (HBITMAP)SelectObject(memdc, chbackground.bit);
+		TransparentBlt(hdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206 , 181));
+		SelectObject(memdc, oldbit);
+		DeleteObject(memdc);
+		DeleteObject(oldbit);
+
+		//더블버퍼링
+		{
+			tmpDC = hdc;
+			hdc = MemDC;
+			MemDC = tmpDC;
+			BitBlt(hdc, 0, 0, WindowRect.right, WindowRect.bottom, MemDC, 0, 0, SRCCOPY);
+			SelectObject(MemDC, oldBackBit);
+			DeleteObject(BackBit);
+			DeleteDC(MemDC);
+		}
+
+		EndPaint(hWnd, &ps);
+		break;
+	}
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	}
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
 bool CheckStart() {
 	std::uniform_int_distribution<> uid1(Pink, Gray);
 	std::uniform_int_distribution<> uid2(Pink, Purple);
@@ -717,16 +851,15 @@ void PrintScore(HDC hdc) {
 	TCHAR str[6];
 	HFONT hfont, oldfont;
 	wsprintf(str, "%d", score);
-	TextOut(hdc, 70, 57, str, strlen(str));
-
+	TextOut(hdc, 230, 50, str, strlen(str));;
 	wsprintf(str, "%d", Goalscore);
-	TextOut(hdc, 380, 57, str, strlen(str));
+	TextOut(hdc, 380, 50, str, strlen(str));
 }
 void PrintTurn(HDC hdc) {
 	TCHAR str[3];
 	HFONT hfont, oldfont;
 	wsprintf(str, "%d", Turn);
-	TextOut(hdc, 230, 57, str, strlen(str));
+	TextOut(hdc, 75, 50, str, strlen(str));
 }
 
 void PrintKirby(HDC hdc) {
@@ -1221,4 +1354,52 @@ void NewBlock() {
 			}
 		}
 	}
+}
+void Reset() {
+	cnt = 0;
+	score = 0;
+	skill = -1;
+	LBSel = true; pause = false;
+	switch (stage) {
+	case 1:
+	{
+		std::uniform_int_distribution<> uid(Pink, Gray);
+		for (int i = 0; i < BLOCKCOL; ++i) {
+			for (int j = 0; j < BLOCKROW; ++j) {
+				block[i][j].color = uid(engine);
+				block[i][j].pos = { 16 + j * ROWDIS + 4, 161 + i * COLDIS + 4 };
+			}
+		}
+		Goalscore = 5000;
+		Turn = 20;
+	}
+	break;
+	case 2:
+	{
+		std::uniform_int_distribution<> uid(Pink, Purple);
+		for (int i = 0; i < BLOCKCOL; ++i) {
+			for (int j = 0; j < BLOCKROW; ++j) {
+				block[i][j].color = uid(engine);
+				block[i][j].pos = { 16 + j * ROWDIS + 4, 161 + i * COLDIS + 4 };
+			}
+		}
+		Goalscore = 7000;
+		Turn = 18;
+	}
+	break;
+	case 3:
+	{
+		std::uniform_int_distribution<> uid(Pink, Orange);
+		for (int i = 0; i < BLOCKCOL; ++i) {
+			for (int j = 0; j < BLOCKROW; ++j) {
+				block[i][j].color = uid(engine);
+				block[i][j].pos = { 16 + j * ROWDIS + 4, 161 + i * COLDIS + 4 };
+			}
+		}
+		Goalscore = 10000;
+		Turn = 15;
+	}
+	break;
+	}
+	while (CheckStart());
 }

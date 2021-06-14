@@ -4,6 +4,10 @@
 //
 // Next default values for new objects
 // 
+#define IDC_PLAY						200
+#define IDC_EXIT						201
+#define IDC_RETRY						202
+
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
