@@ -135,7 +135,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			Goalscore = 5000;
-			Turn = 20;
+			Turn = 15;
+			bombnum = 3;
+			switchnum = 2;
+			turnnum = 1;
+			returnnum = 1;
 		}
 		break;
 		case 2:
@@ -149,6 +153,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			Goalscore = 7000;
 			Turn = 18;
+			bombnum = 2;
+			switchnum = 3;
+			turnnum = 1;
+			returnnum = 1;
 		}
 		break;
 		case 3:
@@ -160,8 +168,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					block[i][j].pos = { 16 + j * ROWDIS + 4, 161 + i * COLDIS + 4 };
 				}
 			}
-			Goalscore = 10000;
+			Goalscore = 8000;
 			Turn = 15;
+			bombnum = 1;
+			switchnum = 3;
+			turnnum = 0;
+			returnnum = 1;
 		}
 		break;
 		}
@@ -176,6 +188,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				pause = true;
 				child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
 					90, 240, 300, 318, hwnd, NULL, g_hInst, NULL);
+
 				play = CreateWindow("button", "Play", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
 					75, 60, 150, 57, child_hWnd, (HMENU)IDC_PLAY, g_hInst, NULL);
 				hbit = (HBITMAP)LoadImage(g_hInst, "continue.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -199,21 +212,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_PLAY:
-			DestroyWindow(child_hWnd);
-			//SendMessage(child_hWnd, uMsg, IDC_PLAY, lParam); 
-			break;
-		case IDC_EXIT:	
-			SendMessage(child_hWnd, uMsg, IDC_EXIT, lParam);
-			break;
-		case IDC_RETRY:
-			SetTimer(hwnd, 1, 500, NULL);
-			InvalidateRect(hwnd, NULL, FALSE);
-			break;
-		}
-		break;
 	case WM_LBUTTONDOWN:
 	{
 		if (!pause) {
@@ -223,19 +221,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (skill != -1) { //스킬이 눌려있을때
 					switch (skill) {
 					case 0:	//폭탄(공격)
-						SkillBomb(mx, my);
-						SetTimer(hwnd, 1, 100, NULL);
-						SetTimer(hwnd, 6, 200, NULL);
-						kirby.Move = true;
-						kirby.moveCount = 0;
-						selectedSkill = 0;
+						if (bombnum != 0) {
+							SkillBomb(mx, my);
+							SetTimer(hwnd, 1, 100, NULL);
+							SetTimer(hwnd, 6, 200, NULL);
+							kirby.Move = true;
+							kirby.moveCount = 0;
+							selectedSkill = 0;
+						}
 						break;
 					case 1:	//스위치(구르기)
-						SkillSwitch(mx, my);
-						SetTimer(hwnd, 6, 100, NULL);
-						kirby.Move = true;
-						kirby.moveCount = 0;
-						selectedSkill = 1;
+						if (switchnum != 0) {
+							SkillSwitch(mx, my);
+							SetTimer(hwnd, 6, 100, NULL);
+							kirby.Move = true;
+							kirby.moveCount = 0;
+							selectedSkill = 1;
+						}
 						break;
 					default:
 						skill = -1;
@@ -249,9 +251,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						for (int i = 0; i < BLOCKCOL; ++i) {
 							for (int j = 0; j < BLOCKROW; ++j) {
 								returnblock[i][j] = block[i][j];
-								returnscore = score;
 							}
 						}
+						returnscore = score;
 						SetTimer(hwnd, 2, 1, NULL); //블럭 자리바꾸기 애니메이션
 					}
 					else {
@@ -261,14 +263,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (skill == -1) {
 					skill = SkillSelect(mx, my);
 				}
-				if (skill == 2) {		//턴증가(빨아들이기)
+				if (skill == 2 && turnnum != 0) { //턴증가(빨아들이기)
 					SetTimer(hwnd, 6, 200, NULL);
 					kirby.Move = true;
 					kirby.moveCount = 0;
 					selectedSkill = 2;
 					SkillTurn();
 				}
-				else if (skill == 3) {	//리버스(전화)
+				else if (skill == 3 && returnnum != 0) { //리버스(전화)
 					SetTimer(hwnd, 6, 200, NULL);
 					kirby.Move = true;
 					kirby.moveCount = 0;
@@ -434,6 +436,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					else {
 						LBSel = true;
 						SetTimer(hwnd, 1, 500, NULL);
+						//게임종료
+						if (score >= Goalscore) {
+							pause = true;
+							end = true;
+							child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
+								40, 240, 400, 233, hwnd, NULL, g_hInst, NULL);
+
+							chexit = CreateWindow("button", "Exit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+								20, 140, 150, 57, child_hWnd, (HMENU)IDC_EXIT, g_hInst, NULL);
+							hbit = (HBITMAP)LoadImage(g_hInst, "exit.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+							SendMessage(chexit, BM_SETIMAGE, 0, (LPARAM)hbit);
+
+							retry = CreateWindow("button", "Retry", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+								200, 140, 150, 57, child_hWnd, (HMENU)IDC_RETRY, g_hInst, NULL);
+							hbit = (HBITMAP)LoadImage(g_hInst, "retry.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+							SendMessage(retry, BM_SETIMAGE, 0, (LPARAM)hbit);
+						}
+						else if (Turn == 0) {
+							pause = true;
+							end = true;
+							child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
+								40, 240, 400, 233, hwnd, NULL, g_hInst, NULL);
+
+							chexit = CreateWindow("button", "Exit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+								20, 140, 150, 57, child_hWnd, (HMENU)IDC_EXIT, g_hInst, NULL);
+							hbit = (HBITMAP)LoadImage(g_hInst, "exit.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+							SendMessage(chexit, BM_SETIMAGE, 0, (LPARAM)hbit);
+
+							retry = CreateWindow("button", "Retry", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+								200, 140, 150, 57, child_hWnd, (HMENU)IDC_RETRY, g_hInst, NULL);
+							hbit = (HBITMAP)LoadImage(g_hInst, "retry.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+							SendMessage(retry, BM_SETIMAGE, 0, (LPARAM)hbit);
+						}
 					}
 				}
 			}
@@ -551,40 +586,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			DeleteDC(MemDC);
 		}
 		
-		//게임종료
-		if (score >= Goalscore) {
-			KillTimer(hwnd, 1);
-			KillTimer(hwnd, 2);
-			KillTimer(hwnd, 3);
-			KillTimer(hwnd, 4);
-			MessageBox(hwnd, "목표달성!", "알림", MB_OK);
-			PostQuitMessage(0);
-		}
-		else if (Turn == 0) {
-			KillTimer(hwnd, 1);
-			KillTimer(hwnd, 2);
-			KillTimer(hwnd, 3);
-			KillTimer(hwnd, 4);
-			MessageBox(hwnd, "목표실패!", "알림", MB_OK);
-			PostQuitMessage(0);
-		}
 		EndPaint(hwnd, &ps);
+		
+		
 		break;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 	}
+	
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
-	static Bit chbackground;
+	static Bit chbackground, chend;
 	BITMAP bmp;
-	HDC memdc, hdc, MemDC, tmpDC;
-	HBITMAP oldbit, BackBit, oldBackBit;
-
+	HDC memdc, hdc;
+	HBITMAP oldbit;
+	TCHAR str[6];
 	switch (uMsg)
 	{
 	case WM_CREATE:
@@ -593,6 +614,11 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		GetObject(chbackground.bit, sizeof(BITMAP), &bmp);
 		chbackground.bitmapSize.x = bmp.bmWidth;
 		chbackground.bitmapSize.y = bmp.bmHeight;
+
+		chend.bit = (HBITMAP)LoadImage(g_hInst, "gameover.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		GetObject(chend.bit, sizeof(BITMAP), &bmp);
+		chend.bitmapSize.x = bmp.bmWidth;
+		chend.bitmapSize.y = bmp.bmHeight;
 	}
 	break;
 	case WM_COMMAND:
@@ -602,7 +628,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			DestroyWindow(hWnd);
 			break;
 		case IDC_EXIT:
-			DestroyWindow(hWnd);
+			PostQuitMessage(0);
 			break;
 		case IDC_RETRY:
 			Reset();
@@ -615,13 +641,25 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps;
 		hdc = BeginPaint(hWnd, &ps);
 
-		memdc = CreateCompatibleDC(hdc);
-		oldbit = (HBITMAP)SelectObject(memdc, chbackground.bit);
-		TransparentBlt(hdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206 , 181));
-		SelectObject(memdc, oldbit);
-		DeleteObject(memdc);
-		DeleteObject(oldbit);
-
+		if (pause && !end) {
+			memdc = CreateCompatibleDC(hdc);
+			oldbit = (HBITMAP)SelectObject(memdc, chbackground.bit);
+			TransparentBlt(hdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206, 181));
+			SelectObject(memdc, oldbit);
+			DeleteObject(memdc);
+			DeleteObject(oldbit);
+		}
+		else if (end) {
+			memdc = CreateCompatibleDC(hdc);
+			oldbit = (HBITMAP)SelectObject(memdc, chend.bit);
+			TransparentBlt(hdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, memdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, RGB(201, 206, 181));
+			SelectObject(memdc, oldbit);
+			DeleteObject(memdc);
+			DeleteObject(oldbit);
+			SetBkMode(hdc, TRANSPARENT);
+			wsprintf(str, "%d", score);
+			TextOut(hdc, 150, 72, str, strlen(str));
+		}
 		EndPaint(hWnd, &ps);
 		break;
 	}
@@ -746,6 +784,7 @@ void PrintBoard(HDC hdc) {
 void PrintSkill(HDC hdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
+	TCHAR str[3];
 	for (int i = 0; i < 4; ++i) {
 		memdc = CreateCompatibleDC(hdc);
 		Oldbit = (HBITMAP)SelectObject(memdc, Skill[i].bit);
@@ -753,6 +792,19 @@ void PrintSkill(HDC hdc) {
 		SelectObject(memdc, Oldbit);
 		DeleteObject(memdc);
 		DeleteObject(Oldbit);
+		SetBkMode(hdc, TRANSPARENT);
+		SetTextColor(hdc, RGB(0, 170, 20));
+		wsprintf(str, "%d", bombnum);
+		TextOut(hdc, Skill[0].bitmapSize.x + SKILLDIS * 0 - 5, 765, str, strlen(str));
+
+		wsprintf(str, "%d", switchnum);
+		TextOut(hdc, Skill[1].bitmapSize.x + SKILLDIS * 1 - 5, 765, str, strlen(str));
+
+		wsprintf(str, "%d", turnnum);
+		TextOut(hdc, Skill[2].bitmapSize.x + SKILLDIS * 2 - 5, 765, str, strlen(str));
+
+		wsprintf(str, "%d", returnnum);
+		TextOut(hdc, Skill[3].bitmapSize.x + SKILLDIS * 3 - 7, 765, str, strlen(str));
 	}
 }
 void PrintBlock(HDC hdc) {
@@ -828,14 +880,25 @@ void PrintBlock(HDC hdc) {
 void PrintScore(HDC hdc) {
 	TCHAR str[6];
 	HFONT hfont, oldfont;
+	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
+	oldfont = (HFONT)SelectObject(hdc, hfont);
+	SetTextColor(hdc, RGB(0, 0, 0));
 	wsprintf(str, "%d", score);
-	TextOut(hdc, 230, 50, str, strlen(str));;
+	TextOut(hdc, 230, 50, str, strlen(str));
+	SelectObject(hdc, oldfont);
+	DeleteObject(hfont);
+
+	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
+	oldfont = (HFONT)SelectObject(hdc, hfont);
 	wsprintf(str, "%d", Goalscore);
 	TextOut(hdc, 380, 50, str, strlen(str));
+	SelectObject(hdc, oldfont);
+	DeleteObject(hfont);
 }
 void PrintTurn(HDC hdc) {
 	TCHAR str[3];
 	HFONT hfont, oldfont;
+	SetBkMode(hdc, TRANSPARENT);
 	wsprintf(str, "%d", Turn);
 	TextOut(hdc, 75, 50, str, strlen(str));
 }
@@ -936,6 +999,12 @@ void PrintSkillRect(HDC hdc) {
 void SkillBomb(int mx, int my) {
 	for (int i = 0; i < BLOCKCOL; ++i) {
 		for (int j = 0; j < BLOCKROW; ++j) {
+			returnblock[i][j] = block[i][j];
+		}
+	}
+	returnscore = score;
+	for (int i = 0; i < BLOCKCOL; ++i) {
+		for (int j = 0; j < BLOCKROW; ++j) {
 			if (block[i][j].pos.x <= mx && block[i][j].pos.x + BLOCKSIZE >= mx && block[i][j].pos.y <= my && block[i][j].pos.y + BLOCKSIZE >= my) {
 				if (i == 0 && j== 0) {
 					block[i][j].destroy = true; block[i + 1][j].destroy = true; block[i + 1][j + 1].destroy = true; block[i][j + 1].destroy = true;
@@ -991,11 +1060,14 @@ void SkillBomb(int mx, int my) {
 					block[i][j].ani = 0;        block[i + 1][j].ani = 0;        block[i - 1][j].ani = 0;        block[i][j + 1].ani = 0;        block[i][j - 1].ani = 0;        block[i - 1][j - 1].ani = 0;	    block[i - 1][j + 1].ani = 0;	    block[i + 1][j + 1].ani = 0;	    block[i + 1][j - 1].ani = 0;
 					score += 90;
 				}
+				skill = -1;
+				Turn--;
+				bombnum--;
+				break;
 			}
 		}
 	}
-	skill = -1;
-	Turn--;
+	
 }
 void SkillSwitch(int mx, int my) {
 	for (int i = 0; i < BLOCKCOL; ++i) {
@@ -1014,6 +1086,8 @@ void SkillSwitch(int mx, int my) {
 					IsSel = false;
 					skill = -1;
 				}
+				switchnum--;
+				break;
 			}
 		}
 	}
@@ -1023,16 +1097,19 @@ void SkillTurn() {
 	case 1:
 		if (Turn <= 15) {
 			Turn += 5;
+			turnnum--;
 		}
 		break;
 	case 2:
 		if (Turn <= 13) {
 			Turn += 5;
+			turnnum--;
 		}
 		break;
 	case 3:
 		if (Turn <= 10) {
 			Turn += 5;
+			turnnum--;
 		}
 		break;
 	}
@@ -1049,6 +1126,7 @@ void SkillReturn() {
 			}
 			score = returnscore;
 			Turn--;
+			returnnum--;
 		}
 		break;
 	case 2:
@@ -1060,6 +1138,7 @@ void SkillReturn() {
 			}
 			score = returnscore;
 			Turn--;
+			returnnum--;
 		}
 		break;
 	case 3:
@@ -1071,6 +1150,7 @@ void SkillReturn() {
 			}
 			score = returnscore;
 			Turn--;
+			returnnum--;
 		}
 		break;
 	}

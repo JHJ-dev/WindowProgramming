@@ -43,8 +43,9 @@ static int dir;
 static int score, destorynum;
 static int skill, returnscore;
 static int selectedSkill;
+static int bombnum, switchnum, turnnum, returnnum;
 static HWND play, chexit, retry; //차일드 윈도우
-static bool pause; //일시정지
+static bool pause, end; //일시정지
 enum {
 	Left = 0, Right, Up, Down = 3
 };
