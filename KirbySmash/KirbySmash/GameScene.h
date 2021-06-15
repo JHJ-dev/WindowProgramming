@@ -35,24 +35,15 @@ RECT WindowRect; //window크기
 
 COLORREF kirbyRGB = RGB(100, 100, 100);
 
-static int Goalscore, Turn;
-static bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
-static int selx, sely; //선택한 블럭 인덱스
-static int tmpx, tmpy, cnt; //블럭자리 바꿀때 
-static int dir;
-static int score, destorynum;
-static int skill, returnscore;
-static int selectedSkill;
-static int bombnum, switchnum, turnnum, returnnum;
-static HWND play, chexit, retry; //차일드 윈도우
-static bool pause, end; //일시정지
 enum {
 	Left = 0, Right, Up, Down = 3
 };
 enum {
 	Pink = 0, Blue, Green, Gray, Purple, Orange = 5
 };
-
+enum {
+	Small = 0, Big = 1
+};
 int skillAni[4] = { 6, 11, 5, 6};
 
 struct Object{
@@ -60,9 +51,11 @@ struct Object{
 	int color; //블럭색 -> 0:핑크, 1:블루, 2:그린, 3:회색, 4:보라, 5:오렌지
 	int ani; //애니메이션 순서 인덱스
 	bool destroy;
+	int blocksize{ 0 };
 };
 Object block[BLOCKCOL][BLOCKROW]; //블럭
 Object returnblock[BLOCKCOL][BLOCKROW];
+
 struct Bit {
 	POINT bitmapSize; //비트맵크기
 	HBITMAP bit;
@@ -71,6 +64,7 @@ Bit Background;
 Bit Block[7];
 Bit Skill[4];
 Bit Child[3];
+
 struct Kirby {
 	HBITMAP hBitmap;
 	POINT bitmapSize;	//비트맵 크기
@@ -81,6 +75,19 @@ struct Kirby {
 	int aniIndex;		//캐릭터 애니메이션 인덱스
 };
 Kirby kirby;
+
+static int Goalscore, Turn;
+static bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
+static int selx, sely; //선택한 블럭 인덱스
+static int tmpx, tmpy, cnt; //블럭자리 바꿀때 
+static int dir;
+static int score, destorynum;
+static int skill, returnscore;
+static int selectedSkill;
+static int bombnum, switchnum, turnnum, returnnum;
+static int selectdir{ Small };
+static HWND play, chexit, retry; //차일드 윈도우
+static bool pause, end; //일시정지
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

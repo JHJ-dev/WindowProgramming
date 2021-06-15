@@ -233,10 +233,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case 1:	//스위치(구르기)
 						if (switchnum != 0) {
 							SkillSwitch(mx, my);
-							SetTimer(hwnd, 6, 100, NULL);
-							kirby.Move = true;
-							kirby.moveCount = 0;
-							selectedSkill = 1;
+							if (!IsSel) {
+								KillTimer(hwnd, 1);
+								SetTimer(hwnd, 7, 50, NULL);
+								SetTimer(hwnd, 6, 100, NULL);
+								kirby.Move = true;
+								kirby.moveCount = 0;
+								selectedSkill = 1;
+							}
 						}
 						break;
 					default:
@@ -543,8 +547,40 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 				}
-				break;
 				LBSel = true;
+				break;
+			case 7:
+			{
+				if (selectdir == Small) {
+					block[sely][selx].blocksize -= 3;
+					block[tmpy][tmpx].blocksize -= 3;
+					if (block[sely][selx].blocksize == -36) {
+						selectdir = Big;
+						Object temp = block[tmpy][tmpx];
+						POINT temppt = block[tmpy][tmpx].pos;
+						block[tmpy][tmpx] = block[sely][selx];
+						block[tmpy][tmpx].pos = temppt;
+						temppt = block[sely][selx].pos;
+						block[sely][selx] = temp;
+						block[sely][selx].pos = temppt;
+					}
+				}
+				else {
+					block[sely][selx].blocksize += 3;
+					block[tmpy][tmpx].blocksize += 3;
+					if (block[sely][selx].blocksize == 0) {
+						selectdir = Small;				
+						KillTimer(hwnd, 7);
+						if (Check3()) {
+							SetTimer(hwnd, 1, 100, NULL);
+						}
+						else {
+							SetTimer(hwnd, 1, 500, NULL);
+						}
+					}
+				}
+				break;
+			}
 			}
 		}
 		InvalidateRect(hwnd, NULL, FALSE);
@@ -817,7 +853,7 @@ void PrintBlock(HDC hdc) {
 			case Pink: //Pink
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[0].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[0].bitmapSize.x / 4 * block[i][j].ani), 0, Block[0].bitmapSize.x / 4, Block[0].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[0].bitmapSize.x / 4 * block[i][j].ani), 0, Block[0].bitmapSize.x / 4, Block[0].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -825,7 +861,7 @@ void PrintBlock(HDC hdc) {
 			case Blue: //Blue
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[1].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[1].bitmapSize.x / 4 * block[i][j].ani), 0, Block[1].bitmapSize.x / 4, Block[1].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[1].bitmapSize.x / 4 * block[i][j].ani), 0, Block[1].bitmapSize.x / 4, Block[1].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -833,7 +869,7 @@ void PrintBlock(HDC hdc) {
 			case Green: //Green
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[2].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[2].bitmapSize.x / 4 * block[i][j].ani), 0, Block[2].bitmapSize.x / 4, Block[2].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[2].bitmapSize.x / 4 * block[i][j].ani), 0, Block[2].bitmapSize.x / 4, Block[2].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -841,7 +877,7 @@ void PrintBlock(HDC hdc) {
 			case Gray: //Gray
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[3].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[3].bitmapSize.x / 4 * block[i][j].ani), 0, Block[3].bitmapSize.x / 4, Block[3].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[3].bitmapSize.x / 4 * block[i][j].ani), 0, Block[3].bitmapSize.x / 4, Block[3].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -849,7 +885,7 @@ void PrintBlock(HDC hdc) {
 			case Purple: //Purple
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[4].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[4].bitmapSize.x / 4 * block[i][j].ani), 0, Block[4].bitmapSize.x / 4, Block[4].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[4].bitmapSize.x / 4 * block[i][j].ani), 0, Block[4].bitmapSize.x / 4, Block[4].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -857,7 +893,7 @@ void PrintBlock(HDC hdc) {
 			case Orange: //Orange
 				memdc = CreateCompatibleDC(hdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[5].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE, BLOCKSIZE, memdc, (Block[5].bitmapSize.x / 4 * block[i][j].ani), 0, Block[5].bitmapSize.x / 4, Block[5].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[5].bitmapSize.x / 4 * block[i][j].ani), 0, Block[5].bitmapSize.x / 4, Block[5].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -1085,8 +1121,9 @@ void SkillSwitch(int mx, int my) {
 					sely = i;
 					IsSel = false;
 					skill = -1;
+					switchnum--;
+					Turn--;
 				}
-				switchnum--;
 				break;
 			}
 		}
