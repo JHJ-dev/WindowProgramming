@@ -2,6 +2,7 @@
 #include <tchar.h>
 #include <random>
 #include <math.h>
+#include <fmod.h>
 #include "resource.h"
 
 #ifdef UNICODE
@@ -26,6 +27,9 @@
 #define COLDIS 45 //블럭간 거리
 #define SKILLDIS 123 //스킬블럭간 거리
 #define KIRBYSIZE 100
+#define SOUND_EFFECT 2
+#define EFFECT_COUNT 4
+#define CHANNEL_COUNT 5
 
 //스테이지씬
 #define STAGECNT 3				//스테이지 개수
@@ -111,6 +115,11 @@ enum {
 };
 int skillAni[4] = { 7, 11, 5, 7 };	//공격, 구르기, 빨아들이기, 전화
 
+static FMOD_SYSTEM* System;
+static FMOD_SOUND* bgmSound[SOUND_EFFECT];
+static FMOD_SOUND* effectSound[EFFECT_COUNT];
+static FMOD_CHANNEL* Channel[CHANNEL_COUNT];
+
 static int Goalscore, Turn;
 static bool IsSel, LBSel; //선택여부 확인, 좌클릭누르기
 static int selx, sely; //선택한 블럭 인덱스
@@ -180,6 +189,7 @@ void SkillTurn();
 void SkillReturn();
 void Reset();
 void PrintFade(HDC hdc);
+void Sound_Setup();
 
 //스테이지씬
 BOOL InCircle(POINT a, POINT b);		//마우스 좌표가 원 안에 있는지 체크

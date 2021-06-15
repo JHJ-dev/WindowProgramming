@@ -59,6 +59,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 	case WM_CREATE:
 	{
+		Sound_Setup();
+		FMOD_System_PlaySound(System, bgmSound[0], NULL, 0, &Channel[0]);
+		FMOD_Channel_SetVolume(Channel[0], 0.1);
 		scene = 0;
 		//게임씬
 		{
@@ -629,14 +632,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					if (Loading) {
 						if (loadingCnt == 0) {	//페이드아웃
-							if (alpha < 247) alpha += 8;
+							if (alpha < 247) alpha += 16;
 							else {
 								alpha = 255;
 								loadingCnt++;
 							}
 						}
 						else {					//페이드인
-							if (alpha > 8) alpha -= 8;
+							if (alpha > 8) alpha -= 16;
 							else {
 								alpha = 0;
 								loadingCnt++;
@@ -736,7 +739,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				if (Loading) {
 					if (loadingCnt == 0) {	//페이드아웃
-						if (alpha < 247) alpha += 8;
+						if (alpha < 247) alpha += 16;
 						else {
 							alpha = 255;
 							loadingCnt++;
@@ -797,6 +800,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							}
 							pause = false;
 							SetTimer(hwnd, 8, 100, NULL);
+							FMOD_Channel_Stop(Channel[0]);
+							FMOD_System_PlaySound(System, bgmSound[1], NULL, 0, &Channel[0]);
+							FMOD_Channel_SetVolume(Channel[0], 0.1);
 							while (CheckStart());
 							KillTimer(hwnd, 9);
 							KillTimer(hwnd, 10);
@@ -804,7 +810,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 					else { //페이드인
-						if (alpha > 8) alpha -= 8;
+						if (alpha > 8) alpha -= 16;
 						else {
 							alpha = 0;
 							loadingCnt++;
@@ -818,7 +824,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case 12:	//title
 			{
 				if (loadingCnt == 0) {	//페이드아웃
-					if (alpha < 247) alpha += 8;
+					if (alpha < 247) alpha += 16;
 					else {
 						KillTimer(hwnd, 9);
 						KillTimer(hwnd, 10);
@@ -828,7 +834,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 				}
 				else {					//페이드인
-					if (alpha > 8) alpha -= 16;
+					if (alpha > 8) alpha -= 64;
 					else {
 						alpha = 0;
 						loadingCnt++;
@@ -870,6 +876,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				KillTimer(hwnd, 6);
 				KillTimer(hwnd, 7);
 				SetTimer(hwnd, 9, 100, NULL);
+				FMOD_Channel_Stop(Channel[0]);
+				FMOD_System_PlaySound(System, bgmSound[0], NULL, 0, &Channel[0]);
+				FMOD_Channel_SetVolume(Channel[0], 0.1);
 				exittost = false;
 				scene = 0;
 			}
@@ -947,6 +956,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
+		for (int i = 0; i < SOUND_EFFECT; ++i) {
+			FMOD_Sound_Release(bgmSound[i]);
+		}
+		for (int i = 0; i < EFFECT_COUNT; ++i) {
+			FMOD_Sound_Release(effectSound[i]);
+		}
 		PostQuitMessage(0);
 		return 0;
 	}
@@ -988,6 +1003,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case IDC_RETRY:
 			Reset();
+			while (CheckStart());
 			DestroyWindow(hWnd);
 			break;
 		}
@@ -1428,6 +1444,8 @@ void SkillBomb(int mx, int my) {
 				skill = -1;
 				Turn--;
 				bombnum--;
+				FMOD_Channel_SetVolume(Channel[1], 0.1);
+				FMOD_System_PlaySound(System, effectSound[0], NULL, 0, &Channel[1]);
 				break;
 			}
 		}
@@ -1445,6 +1463,12 @@ void SkillSwitch(int mx, int my) {
 					IsSel = true;
 				}
 				else {
+					for (int k = 0; k < BLOCKCOL; ++k) {
+						for (int l = 0; l < BLOCKROW; ++l) {
+							returnblock[k][l] = block[k][l];
+						}
+					}
+					returnscore = score;
 					tmpx = selx;
 					tmpy = sely;
 					selx = j;
@@ -1453,6 +1477,7 @@ void SkillSwitch(int mx, int my) {
 					skill = -1;
 					switchnum--;
 					Turn--;
+					FMOD_System_PlaySound(System, effectSound[1], NULL, 0, &Channel[1]);
 				}
 				break;
 			}
@@ -1466,18 +1491,21 @@ void SkillTurn() {
 		if (Turn <= 15) {
 			Turn += 5;
 			turnnum--;
+			FMOD_System_PlaySound(System, effectSound[2], NULL, 0, &Channel[1]);
 		}
 		break;
 	case 2:
 		if (Turn <= 13) {
 			Turn += 5;
 			turnnum--;
+			FMOD_System_PlaySound(System, effectSound[2], NULL, 0, &Channel[1]);
 		}
 		break;
 	case 3:
 		if (Turn <= 10) {
 			Turn += 5;
 			turnnum--;
+			FMOD_System_PlaySound(System, effectSound[2], NULL, 0, &Channel[1]);
 		}
 		break;
 	}
@@ -1487,7 +1515,7 @@ void SkillTurn() {
 void SkillReturn() {
 	switch (stage) {
 	case 1:
-		if (Turn < 20) {
+		if (Turn < 15 || turnnum != 1) {
 			for (int i = 0; i < BLOCKCOL; ++i) {
 				for (int j = 0; j < BLOCKROW; ++j) {
 					block[i][j] = returnblock[i][j];
@@ -1496,10 +1524,13 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
+			FMOD_Channel_SetVolume(Channel[1], 0.3);
+			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
+
 		}
 		break;
 	case 2:
-		if (Turn < 18) {
+		if (Turn < 18 || turnnum != 1) {
 			for (int i = 0; i < BLOCKCOL; ++i) {
 				for (int j = 0; j < BLOCKROW; ++j) {
 					block[i][j] = returnblock[i][j];
@@ -1508,6 +1539,9 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
+			FMOD_Channel_SetVolume(Channel[1], 0.3);
+			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
+
 		}
 		break;
 	case 3:
@@ -1520,6 +1554,8 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
+			FMOD_Channel_SetVolume(Channel[1], 0.1);
+			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
 		}
 		break;
 	}
@@ -1805,7 +1841,11 @@ void Reset() {
 			}
 		}
 		Goalscore = 5000;
-		Turn = 20;
+		Turn = 15;
+		bombnum = 3;
+		switchnum = 2;
+		turnnum = 1;
+		returnnum = 1;
 	}
 	break;
 	case 2:
@@ -1819,6 +1859,10 @@ void Reset() {
 		}
 		Goalscore = 7000;
 		Turn = 18;
+		bombnum = 2;
+		switchnum = 3;
+		turnnum = 1;
+		returnnum = 1;
 	}
 	break;
 	case 3:
@@ -1830,12 +1874,15 @@ void Reset() {
 				block[i][j].pos = { 16 + j * ROWDIS + 4, 161 + i * COLDIS + 4 };
 			}
 		}
-		Goalscore = 10000;
+		Goalscore = 8000;
 		Turn = 15;
+		bombnum = 1;
+		switchnum = 3;
+		turnnum = 0;
+		returnnum = 1;
 	}
 	break;
 	}
-	while (CheckStart());
 }
 
 void PrintFade(HDC ghdc) {
@@ -1862,4 +1909,18 @@ BOOL InCircle(POINT a, POINT b) {
 	dis = sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
 	if (dis < BUTTONRADIUS) return TRUE;
 	else return FALSE;
+}
+
+void Sound_Setup()
+{
+	FMOD_System_Create(&System);
+	FMOD_System_Init(System, 10, FMOD_INIT_NORMAL, NULL);
+
+	FMOD_System_CreateSound(System, "stageBGM.mp3", FMOD_LOOP_NORMAL, 0, &bgmSound[0]);
+	FMOD_System_CreateSound(System, "BGM.mp3", FMOD_LOOP_NORMAL, 0, &bgmSound[1]);
+
+	FMOD_System_CreateSound(System, "bombsound.mp3", FMOD_DEFAULT, 0, &effectSound[0]);
+	FMOD_System_CreateSound(System, "switchsound.mp3", FMOD_DEFAULT, 0, &effectSound[1]);
+	FMOD_System_CreateSound(System, "turnsound.mp3", FMOD_DEFAULT, 0, &effectSound[2]);
+	FMOD_System_CreateSound(System, "returnsound.wav", FMOD_DEFAULT, 0, &effectSound[3]);
 }
