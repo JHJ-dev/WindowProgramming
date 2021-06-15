@@ -64,7 +64,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			cnt = 0;
 			skill = -1;
-			LBSel = true; pause = false;
+			LBSel = true; pause = false; exittost = false;
 			GetClientRect(hwnd, &WindowRect);
 			GetClientRect(hwnd, &crt);
 			//비트맵 로드, 크기저장
@@ -179,7 +179,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			title.bitmapSize = { bmp.bmWidth, bmp.bmHeight };
 
 			nowStage = 0;
-			SetTimer(hwnd, 4, 100, NULL);
+			SetTimer(hwnd, 12, 100, NULL);
 		}
 		break;
 	}
@@ -306,10 +306,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (InCircle({ stageButton[i].centerPos.x - cx, stageButton[i].centerPos.y - cy }, { mx, my })) {
 						Loading = false;
 						loadingCnt = 0;
-						SetTimer(hwnd, 3, 60, NULL);
+						SetTimer(hwnd, 11, 60, NULL);
 						selectedStage = i;
 						stage = i + 1;
-						printf("%d", stage);
 						if (selectedStage < nowStage) {
 							stagekirby.moveIndex = POINTCNT - 1;
 							stagekirby.Movedir = -1;
@@ -320,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 						else  stagekirby.Movedir = 0;
 						stagekirby.Move = TRUE;
-						SetTimer(hwnd, 2, 100, NULL);
+						SetTimer(hwnd, 10, 100, NULL);
 					}
 				}
 			}
@@ -641,6 +640,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							else {
 								alpha = 0;
 								loadingCnt++;
+								Loading = false;
 								KillTimer(hwnd, 8);
 							}
 						}
@@ -663,7 +663,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//TransparentBlt(출력 DC, 그릴 위치.x, 그릴 위치.y, 그릴 크기.x, 그릴 크기.y, 소스 DC, 메모리DC 위치.x, 메모리DC 위치.y, 가져올 크기.x, 가져올 크기.y, 투명하게 할 색상)
 
 			switch (wParam) {
-			case 1:	//그리기
+			case 9:	//그리기
 			{
 				//스테이지 배경 그리기
 				oldBitmap2 = (HBITMAP)SelectObject(memdc2, stageBackground.hBitmap);
@@ -693,7 +693,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-			case 2:	//커비 이동
+			case 10:	//커비 이동
 			{
 				if (stagekirby.Movedir == 1) {	//우로 이동
 					if (stagekirby.moveIndex < POINTCNT - 1) {
@@ -732,7 +732,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
-			case 3:	//스테이지 진입 알파값 조정
+			case 11:	//스테이지 진입 알파값 조정
 			{
 				if (Loading) {
 					if (loadingCnt == 0) {	//페이드아웃
@@ -795,40 +795,45 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							}
 							break;
 							}
+							pause = false;
 							SetTimer(hwnd, 8, 100, NULL);
-							SetTimer(hwnd, 1, 500, NULL);
 							while (CheckStart());
-							KillTimer(hwnd, 3);
+							KillTimer(hwnd, 9);
+							KillTimer(hwnd, 10);
+							KillTimer(hwnd, 11);
 						}
 					}
-					else {					//페이드인
+					else { //페이드인
 						if (alpha > 8) alpha -= 8;
 						else {
 							alpha = 0;
 							loadingCnt++;
-							KillTimer(hwnd, 3);
+							KillTimer(hwnd, 11);
 						}
 					}
 				}
 			}
 			break;
 
-			case 4:	//title
+			case 12:	//title
 			{
 				if (loadingCnt == 0) {	//페이드아웃
 					if (alpha < 247) alpha += 8;
 					else {
+						KillTimer(hwnd, 9);
+						KillTimer(hwnd, 10);
+						KillTimer(hwnd, 11);
 						alpha = 255;
 						loadingCnt++;
 					}
 				}
 				else {					//페이드인
-					if (alpha > 8) alpha -= 8;
+					if (alpha > 8) alpha -= 16;
 					else {
 						alpha = 0;
 						loadingCnt++;
-						SetTimer(hwnd, 1, 100, NULL);
-						KillTimer(hwnd, 4);
+						SetTimer(hwnd, 9, 100, NULL);
+						KillTimer(hwnd, 12);
 					}
 				}
 
@@ -856,6 +861,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		//게임씬
 		if (scene == 1) {
+			if (exittost) {
+				KillTimer(hwnd, 1);
+				KillTimer(hwnd, 2);
+				KillTimer(hwnd, 3);
+				KillTimer(hwnd, 4);
+				KillTimer(hwnd, 5);
+				KillTimer(hwnd, 6);
+				KillTimer(hwnd, 7);
+				SetTimer(hwnd, 9, 100, NULL);
+				exittost = false;
+				scene = 0;
+			}
 			ghdc = BeginPaint(hwnd, &gps);
 			//더블버퍼링 
 			{
@@ -966,7 +983,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			DestroyWindow(hWnd);
 			break;
 		case IDC_EXIT:	//스테이지씬으로 이동
-			scene = 0;
+			exittost = true;
 			DestroyWindow(hWnd);
 			break;
 		case IDC_RETRY:

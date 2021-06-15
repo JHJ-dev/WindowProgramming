@@ -122,7 +122,7 @@ static int selectedSkill;
 static int bombnum, switchnum, turnnum, returnnum;
 static int selectdir{ Small };
 static HWND play, chexit, retry; //차일드 윈도우
-static bool pause, end; //일시정지
+static bool pause, end, exittost; //일시정지
 static int stage = 1;
 
 //스테이지씬
