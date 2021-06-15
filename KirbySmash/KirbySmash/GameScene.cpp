@@ -44,8 +44,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HWND child_hWnd;
-	HDC hdc, MemDC, tmpDC;
-	PAINTSTRUCT ps;
+	HDC ghdc, MemDC, tmpDC;
+	PAINTSTRUCT gps;
 	BITMAP bmp;
 	HBITMAP BackBit, oldBackBit, hbit;
 	switch (uMsg) {
@@ -586,43 +586,43 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	case WM_PAINT:
-		hdc = BeginPaint(hwnd, &ps);
+		ghdc = BeginPaint(hwnd, &gps);
 		//더블버퍼링 
 		{
-			MemDC = CreateCompatibleDC(hdc);
-			BackBit = CreateCompatibleBitmap(hdc, WindowRect.right, WindowRect.bottom);
+			MemDC = CreateCompatibleDC(ghdc);
+			BackBit = CreateCompatibleBitmap(ghdc, WindowRect.right, WindowRect.bottom);
 			oldBackBit = (HBITMAP)SelectObject(MemDC, BackBit);
 			PatBlt(MemDC, 0, 0, WindowRect.right, WindowRect.bottom, WHITENESS);
-			tmpDC = hdc;
-			hdc = MemDC;
+			tmpDC = ghdc;
+			ghdc = MemDC;
 			MemDC = tmpDC;
 		}
 
-		PrintBackGround(hdc);
-		PrintBoard(hdc);
-		PrintSkill(hdc);
-		PrintBlock(hdc);
-		PrintScore(hdc);
-		PrintTurn(hdc);
-		PrintKirby(hdc);
+		PrintBackGround(ghdc);
+		PrintBoard(ghdc);
+		PrintSkill(ghdc);
+		PrintBlock(ghdc);
+		PrintScore(ghdc);
+		PrintTurn(ghdc);
+		PrintKirby(ghdc);
 		if (IsSel) {
-			PrintRect(hdc);
+			PrintRect(ghdc);
 		}
 		if (skill != -1) {
-			PrintSkillRect(hdc);
+			PrintSkillRect(ghdc);
 		}
 		//더블버퍼링
 		{
-			tmpDC = hdc;
-			hdc = MemDC;
+			tmpDC = ghdc;
+			ghdc = MemDC;
 			MemDC = tmpDC;
-			BitBlt(hdc, 0, 0, WindowRect.right, WindowRect.bottom, MemDC, 0, 0, SRCCOPY);
+			BitBlt(ghdc, 0, 0, WindowRect.right, WindowRect.bottom, MemDC, 0, 0, SRCCOPY);
 			SelectObject(MemDC, oldBackBit);
 			DeleteObject(BackBit);
 			DeleteDC(MemDC);
 		}
 		
-		EndPaint(hwnd, &ps);
+		EndPaint(hwnd, &gps);
 		
 		
 		break;
@@ -639,7 +639,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 	static Bit chbackground, chend;
 	BITMAP bmp;
-	HDC memdc, hdc;
+	HDC memdc, ghdc;
 	HBITMAP oldbit;
 	TCHAR str[6];
 	switch (uMsg)
@@ -675,26 +675,26 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
-		hdc = BeginPaint(hWnd, &ps);
+		ghdc = BeginPaint(hWnd, &ps);
 
 		if (pause && !end) {
-			memdc = CreateCompatibleDC(hdc);
+			memdc = CreateCompatibleDC(ghdc);
 			oldbit = (HBITMAP)SelectObject(memdc, chbackground.bit);
-			TransparentBlt(hdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206, 181));
+			TransparentBlt(ghdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, memdc, 0, 0, chbackground.bitmapSize.x, chbackground.bitmapSize.y, RGB(201, 206, 181));
 			SelectObject(memdc, oldbit);
 			DeleteObject(memdc);
 			DeleteObject(oldbit);
 		}
 		else if (end) {
-			memdc = CreateCompatibleDC(hdc);
+			memdc = CreateCompatibleDC(ghdc);
 			oldbit = (HBITMAP)SelectObject(memdc, chend.bit);
-			TransparentBlt(hdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, memdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, RGB(201, 206, 181));
+			TransparentBlt(ghdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, memdc, 0, 0, chend.bitmapSize.x, chend.bitmapSize.y, RGB(201, 206, 181));
 			SelectObject(memdc, oldbit);
 			DeleteObject(memdc);
 			DeleteObject(oldbit);
-			SetBkMode(hdc, TRANSPARENT);
+			SetBkMode(ghdc, TRANSPARENT);
 			wsprintf(str, "%d", score);
-			TextOut(hdc, 150, 72, str, strlen(str));
+			TextOut(ghdc, 150, 72, str, strlen(str));
 		}
 		EndPaint(hWnd, &ps);
 		break;
@@ -781,69 +781,69 @@ bool CheckStart() {
 	}
 	return false;
 }
-void PrintBackGround(HDC hdc) {
+void PrintBackGround(HDC ghdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
-	memdc = CreateCompatibleDC(hdc);
+	memdc = CreateCompatibleDC(ghdc);
 	Oldbit = (HBITMAP)SelectObject(memdc, Background.bit);
-	BitBlt(hdc, 0, 0, Background.bitmapSize.x, Background.bitmapSize.y, memdc, 0, 0, SRCCOPY);
+	BitBlt(ghdc, 0, 0, Background.bitmapSize.x, Background.bitmapSize.y, memdc, 0, 0, SRCCOPY);
 	SelectObject(memdc, Oldbit);
 	DeleteObject(memdc);
 	DeleteObject(Oldbit);
 }
 
-void PrintBoard(HDC hdc) {
+void PrintBoard(HDC ghdc) {
 	HBRUSH hbrush, oldbrush;
 	HPEN hpen, oldpen;
 	
 	hpen = CreatePen(PS_SOLID, 3, RGB(150, 150, 150));
-	oldpen = (HPEN)SelectObject(hdc, hpen);
-	Rectangle(hdc, 16, 161, 16 + BLOCKROW * 45, 161 + BLOCKCOL * 45);
-	SelectObject(hdc, oldpen);
+	oldpen = (HPEN)SelectObject(ghdc, hpen);
+	Rectangle(ghdc, 16, 161, 16 + BLOCKROW * 45, 161 + BLOCKCOL * 45);
+	SelectObject(ghdc, oldpen);
 	DeleteObject(hpen);
 
 	for (int i = 0; i < BLOCKCOL; ++i) {
 		for (int j = 0; j < BLOCKROW; ++j) {
 			hbrush = CreateSolidBrush(RGB(255, 255, 255));
 			hpen = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));
-			oldpen = (HPEN)SelectObject(hdc, hpen);
-			oldbrush = (HBRUSH)SelectObject(hdc, hbrush);
-			Rectangle(hdc, 16 + j * 45, 161 + i * 45, 16 + (j + 1) * 45, 161 + (i + 1) * 45);
-			SelectObject(hdc, oldbrush);
+			oldpen = (HPEN)SelectObject(ghdc, hpen);
+			oldbrush = (HBRUSH)SelectObject(ghdc, hbrush);
+			Rectangle(ghdc, 16 + j * 45, 161 + i * 45, 16 + (j + 1) * 45, 161 + (i + 1) * 45);
+			SelectObject(ghdc, oldbrush);
 			DeleteObject(hbrush);
-			SelectObject(hdc, oldpen);
+			SelectObject(ghdc, oldpen);
 			DeleteObject(hpen);
 		}
 	}
 	
 }
-void PrintSkill(HDC hdc) {
+void PrintSkill(HDC ghdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
 	TCHAR str[3];
 	for (int i = 0; i < 4; ++i) {
-		memdc = CreateCompatibleDC(hdc);
+		memdc = CreateCompatibleDC(ghdc);
 		Oldbit = (HBITMAP)SelectObject(memdc, Skill[i].bit);
-		TransparentBlt(hdc, 16 + SKILLDIS * i, 710, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, memdc, 0, 0, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, RGB(201, 206, 181));
+		TransparentBlt(ghdc, 16 + SKILLDIS * i, 710, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, memdc, 0, 0, Skill[i].bitmapSize.x, Skill[i].bitmapSize.y, RGB(201, 206, 181));
 		SelectObject(memdc, Oldbit);
 		DeleteObject(memdc);
 		DeleteObject(Oldbit);
-		SetBkMode(hdc, TRANSPARENT);
-		SetTextColor(hdc, RGB(0, 170, 20));
+		SetBkMode(ghdc, TRANSPARENT);
+		SetTextColor(ghdc, RGB(0, 170, 20));
 		wsprintf(str, "%d", bombnum);
-		TextOut(hdc, Skill[0].bitmapSize.x + SKILLDIS * 0 - 5, 765, str, strlen(str));
+		TextOut(ghdc, Skill[0].bitmapSize.x + SKILLDIS * 0 - 5, 765, str, strlen(str));
 
 		wsprintf(str, "%d", switchnum);
-		TextOut(hdc, Skill[1].bitmapSize.x + SKILLDIS * 1 - 5, 765, str, strlen(str));
+		TextOut(ghdc, Skill[1].bitmapSize.x + SKILLDIS * 1 - 5, 765, str, strlen(str));
 
 		wsprintf(str, "%d", turnnum);
-		TextOut(hdc, Skill[2].bitmapSize.x + SKILLDIS * 2 - 5, 765, str, strlen(str));
+		TextOut(ghdc, Skill[2].bitmapSize.x + SKILLDIS * 2 - 5, 765, str, strlen(str));
 
 		wsprintf(str, "%d", returnnum);
-		TextOut(hdc, Skill[3].bitmapSize.x + SKILLDIS * 3 - 7, 765, str, strlen(str));
+		TextOut(ghdc, Skill[3].bitmapSize.x + SKILLDIS * 3 - 7, 765, str, strlen(str));
 	}
 }
-void PrintBlock(HDC hdc) {
+void PrintBlock(HDC ghdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
 
@@ -851,57 +851,57 @@ void PrintBlock(HDC hdc) {
 		for (int j = 0; j < BLOCKROW; ++j) {
 			switch (block[i][j].color) {
 			case Pink: //Pink
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[0].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[0].bitmapSize.x / 4 * block[i][j].ani), 0, Block[0].bitmapSize.x / 4, Block[0].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[0].bitmapSize.x / 4 * block[i][j].ani), 0, Block[0].bitmapSize.x / 4, Block[0].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case Blue: //Blue
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[1].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[1].bitmapSize.x / 4 * block[i][j].ani), 0, Block[1].bitmapSize.x / 4, Block[1].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[1].bitmapSize.x / 4 * block[i][j].ani), 0, Block[1].bitmapSize.x / 4, Block[1].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case Green: //Green
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[2].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[2].bitmapSize.x / 4 * block[i][j].ani), 0, Block[2].bitmapSize.x / 4, Block[2].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[2].bitmapSize.x / 4 * block[i][j].ani), 0, Block[2].bitmapSize.x / 4, Block[2].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case Gray: //Gray
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[3].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[3].bitmapSize.x / 4 * block[i][j].ani), 0, Block[3].bitmapSize.x / 4, Block[3].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[3].bitmapSize.x / 4 * block[i][j].ani), 0, Block[3].bitmapSize.x / 4, Block[3].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case Purple: //Purple
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[4].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[4].bitmapSize.x / 4 * block[i][j].ani), 0, Block[4].bitmapSize.x / 4, Block[4].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[4].bitmapSize.x / 4 * block[i][j].ani), 0, Block[4].bitmapSize.x / 4, Block[4].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case Orange: //Orange
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[5].bit);
-				TransparentBlt(hdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[5].bitmapSize.x / 4 * block[i][j].ani), 0, Block[5].bitmapSize.x / 4, Block[5].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x, block[i][j].pos.y, BLOCKSIZE + block[i][j].blocksize, BLOCKSIZE + block[i][j].blocksize, memdc, (Block[5].bitmapSize.x / 4 * block[i][j].ani), 0, Block[5].bitmapSize.x / 4, Block[5].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
 				break;
 			case 6: //Destroy
-				memdc = CreateCompatibleDC(hdc);
+				memdc = CreateCompatibleDC(ghdc);
 				Oldbit = (HBITMAP)SelectObject(memdc, Block[6].bit);
-				TransparentBlt(hdc, block[i][j].pos.x - 5, block[i][j].pos.y - 4, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, memdc, (Block[6].bitmapSize.x / 8 * block[i][j].ani), 0, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, RGB(201, 206, 181));
+				TransparentBlt(ghdc, block[i][j].pos.x - 5, block[i][j].pos.y - 4, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, memdc, (Block[6].bitmapSize.x / 8 * block[i][j].ani), 0, Block[6].bitmapSize.x / 8, Block[6].bitmapSize.y, RGB(201, 206, 181));
 				SelectObject(memdc, Oldbit);
 				DeleteObject(memdc);
 				DeleteObject(Oldbit);
@@ -913,36 +913,36 @@ void PrintBlock(HDC hdc) {
 	}
 	
 }
-void PrintScore(HDC hdc) {
+void PrintScore(HDC ghdc) {
 	TCHAR str[6];
 	HFONT hfont, oldfont;
 	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
-	oldfont = (HFONT)SelectObject(hdc, hfont);
-	SetTextColor(hdc, RGB(0, 0, 0));
+	oldfont = (HFONT)SelectObject(ghdc, hfont);
+	SetTextColor(ghdc, RGB(0, 0, 0));
 	wsprintf(str, "%d", score);
-	TextOut(hdc, 230, 50, str, strlen(str));
-	SelectObject(hdc, oldfont);
+	TextOut(ghdc, 230, 50, str, strlen(str));
+	SelectObject(ghdc, oldfont);
 	DeleteObject(hfont);
 
 	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
-	oldfont = (HFONT)SelectObject(hdc, hfont);
+	oldfont = (HFONT)SelectObject(ghdc, hfont);
 	wsprintf(str, "%d", Goalscore);
-	TextOut(hdc, 380, 50, str, strlen(str));
-	SelectObject(hdc, oldfont);
+	TextOut(ghdc, 380, 50, str, strlen(str));
+	SelectObject(ghdc, oldfont);
 	DeleteObject(hfont);
 }
-void PrintTurn(HDC hdc) {
+void PrintTurn(HDC ghdc) {
 	TCHAR str[3];
 	HFONT hfont, oldfont;
-	SetBkMode(hdc, TRANSPARENT);
+	SetBkMode(ghdc, TRANSPARENT);
 	wsprintf(str, "%d", Turn);
-	TextOut(hdc, 75, 50, str, strlen(str));
+	TextOut(ghdc, 75, 50, str, strlen(str));
 }
 
-void PrintKirby(HDC hdc) {
+void PrintKirby(HDC ghdc) {
 	HDC memdc;
 	HBITMAP Oldbit;
-	memdc = CreateCompatibleDC(hdc);
+	memdc = CreateCompatibleDC(ghdc);
 	switch (selectedSkill) {
 	case 0:
 		if (kirby.movedir == 1) kirby.hBitmap = (HBITMAP)LoadImage(g_hInst, "rightattack.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -962,7 +962,7 @@ void PrintKirby(HDC hdc) {
 		break;
 	}
 	Oldbit = (HBITMAP)SelectObject(memdc, kirby.hBitmap);
-	TransparentBlt(hdc, kirby.Pos.x, kirby.Pos.y, KIRBYSIZE, KIRBYSIZE, memdc, kirby.aniIndex * kirby.bitmapSize.y, 0, kirby.bitmapSize.y, kirby.bitmapSize.y, kirbyRGB);
+	TransparentBlt(ghdc, kirby.Pos.x, kirby.Pos.y, KIRBYSIZE, KIRBYSIZE, memdc, kirby.aniIndex * kirby.bitmapSize.y, 0, kirby.bitmapSize.y, kirby.bitmapSize.y, kirbyRGB);
 	SelectObject(memdc, Oldbit);
 	DeleteObject(memdc);
 	DeleteObject(Oldbit);
@@ -1003,14 +1003,14 @@ bool BlockSelect(int mx, int my) {
 	}
 	return false;
 }
-void PrintRect(HDC hdc) {
+void PrintRect(HDC ghdc) {
 	RECT rect = {block[sely][selx].pos.x - 5, block[sely][selx].pos.y - 5, block[sely][selx].pos.x + BLOCKSIZE + 5, block[sely][selx].pos.y + BLOCKSIZE + 5};
 	HPEN hpen, oldpen;
 	hpen = CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
-	oldpen = (HPEN)SelectObject(hdc, hpen);
-	SelectObject(hdc, GetStockObject(NULL_BRUSH));
-	Rectangle(hdc, block[sely][selx].pos.x - 5, block[sely][selx].pos.y - 5, block[sely][selx].pos.x + BLOCKSIZE + 5, block[sely][selx].pos.y + BLOCKSIZE + 5);
-	SelectObject(hdc, oldpen);
+	oldpen = (HPEN)SelectObject(ghdc, hpen);
+	SelectObject(ghdc, GetStockObject(NULL_BRUSH));
+	Rectangle(ghdc, block[sely][selx].pos.x - 5, block[sely][selx].pos.y - 5, block[sely][selx].pos.x + BLOCKSIZE + 5, block[sely][selx].pos.y + BLOCKSIZE + 5);
+	SelectObject(ghdc, oldpen);
 	DeleteObject(hpen);
 }
 
@@ -1023,13 +1023,13 @@ int SkillSelect(int mx, int my) {
 	}
 	return -1;
 }
-void PrintSkillRect(HDC hdc) {
+void PrintSkillRect(HDC ghdc) {
 	HPEN hpen, oldpen;
 	hpen = CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
-	oldpen = (HPEN)SelectObject(hdc, hpen);
-	SelectObject(hdc, GetStockObject(NULL_BRUSH));
-	Rectangle(hdc, 16 + SKILLDIS * skill, 710, 16 + SKILLDIS * skill + Skill[skill].bitmapSize.x, 710 + Skill[skill].bitmapSize.y);
-	SelectObject(hdc, oldpen);
+	oldpen = (HPEN)SelectObject(ghdc, hpen);
+	SelectObject(ghdc, GetStockObject(NULL_BRUSH));
+	Rectangle(ghdc, 16 + SKILLDIS * skill, 710, 16 + SKILLDIS * skill + Skill[skill].bitmapSize.x, 710 + Skill[skill].bitmapSize.y);
+	SelectObject(ghdc, oldpen);
 	DeleteObject(hpen);
 }
 void SkillBomb(int mx, int my) {

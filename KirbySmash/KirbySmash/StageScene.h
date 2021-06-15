@@ -35,8 +35,10 @@ static int mx, my;			//마우스 좌표
 static int nowStage;		//현재 스테이지
 static int selectedStage;	//선택된 스테이지
 static int alpha;			//페이드인아웃 알파값
+static BLENDFUNCTION bf;
 static BOOL Loading;
 static int loadingCnt;
+static int scene;			//현재 씬(0: 타이틀, 1: 스테이지, 2: 게임)
 
 POINT stage12[POINTCNT] = {
 	{140, 388}, {148, 393}, {158, 399}, {166, 404}, {174, 408}, {183, 413},
@@ -59,6 +61,7 @@ struct Image {
 Image stageBackground;
 Image stageButton[3];
 Image fade;
+Image title;
 
 struct Character {
 	HBITMAP hBitmap;
@@ -70,4 +73,4 @@ struct Character {
 	int moveIndex;		//이동 좌표 인덱스
 	int aniIndex;		//캐릭터 애니메이션 인덱스
 };
-Character kirby;
+Character stagekirby;
