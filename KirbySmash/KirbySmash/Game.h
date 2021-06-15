@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <tchar.h>
 #include <random>
@@ -190,6 +191,7 @@ void SkillReturn();
 void Reset();
 void PrintFade(HDC hdc);
 void Sound_Setup();
+int digit();
 
 //스테이지씬
 BOOL InCircle(POINT a, POINT b);		//마우스 좌표가 원 안에 있는지 체크

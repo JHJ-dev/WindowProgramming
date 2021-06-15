@@ -494,20 +494,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							SetTimer(hwnd, 1, 500, NULL);
 							//게임종료
 							if (score >= Goalscore) {
-								pause = true;
-								end = true;
-								child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
-									40, 240, 400, 233, hwnd, NULL, g_hInst, NULL);
-
-								chexit = CreateWindow("button", "Exit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
-									20, 140, 150, 57, child_hWnd, (HMENU)IDC_EXIT, g_hInst, NULL);
-								hbit = (HBITMAP)LoadImage(g_hInst, "exit.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-								SendMessage(chexit, BM_SETIMAGE, 0, (LPARAM)hbit);
-
-								retry = CreateWindow("button", "Retry", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
-									200, 140, 150, 57, child_hWnd, (HMENU)IDC_RETRY, g_hInst, NULL);
-								hbit = (HBITMAP)LoadImage(g_hInst, "retry.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-								SendMessage(retry, BM_SETIMAGE, 0, (LPARAM)hbit);
+								if (Turn > 0) {
+									SetTimer(hwnd, 13, 100, NULL);
+								}
+								else {
+									end = true;
+								}
 							}
 							else if (Turn == 0) {
 								pause = true;
@@ -655,6 +647,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					break;
 				}
+				case 13:
+					if (Turn > 0) {
+						Turn--;
+						score += 150;
+					}
+					else {
+						pause = true;
+						score += ((turnnum * 5) * 150);
+						end = true;
+						child_hWnd = CreateWindow("ChildClass", NULL, WS_CHILD | WS_VISIBLE,
+							40, 240, 400, 233, hwnd, NULL, g_hInst, NULL);
+
+						chexit = CreateWindow("button", "Exit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+							20, 140, 150, 57, child_hWnd, (HMENU)IDC_EXIT, g_hInst, NULL);
+						hbit = (HBITMAP)LoadImage(g_hInst, "exit.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+						SendMessage(chexit, BM_SETIMAGE, 0, (LPARAM)hbit);
+
+						retry = CreateWindow("button", "Retry", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+							200, 140, 150, 57, child_hWnd, (HMENU)IDC_RETRY, g_hInst, NULL);
+						hbit = (HBITMAP)LoadImage(g_hInst, "retry.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+						SendMessage(retry, BM_SETIMAGE, 0, (LPARAM)hbit);
+						KillTimer(hwnd, 13);
+					}
+					break;
 				}
 			}
 			InvalidateRect(hwnd, NULL, FALSE);
@@ -982,7 +998,10 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	BITMAP bmp;
 	HDC memdc, ghdc;
 	HBITMAP oldbit;
-	TCHAR str[6];
+	TCHAR str[20];
+	HFONT hfont, oldfont;
+	int num;
+
 	switch (uMsg)
 	{
 	case WM_CREATE:
@@ -1006,10 +1025,12 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case IDC_EXIT:	//스테이지씬으로 이동
 			exittost = true;
+			end = false;
 			alpha = 0;
 			DestroyWindow(hWnd);
 			break;
 		case IDC_RETRY:
+			end = false;
 			Reset();
 			while (CheckStart());
 			DestroyWindow(hWnd);
@@ -1036,9 +1057,36 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			SelectObject(memdc, oldbit);
 			DeleteObject(memdc);
 			DeleteObject(oldbit);
+			
+			hfont = CreateFontA(30, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아.ttf");
+			oldfont = (HFONT)SelectObject(ghdc, hfont);
 			SetBkMode(ghdc, TRANSPARENT);
-			wsprintf(str, "%d", score);
-			TextOut(ghdc, 150, 72, str, strlen(str));
+			
+			num = digit();
+			switch (num) {
+			case 1:
+				wsprintf(str, "%d", score);
+				TextOut(ghdc, 175, 66, str, strlen(str));
+				break;
+			case 2:
+				wsprintf(str, "%d", score);
+				TextOut(ghdc, 186, 66, str, strlen(str));
+				break;
+			case 3:
+				wsprintf(str, "%d", score);
+				TextOut(ghdc, 175, 66, str, strlen(str));
+				break;
+			case 4:
+				wsprintf(str, "%d", score);
+				TextOut(ghdc, 168, 66, str, strlen(str));
+				break;
+			case 5:
+				wsprintf(str, "%d", score);
+				TextOut(ghdc, 160, 66, str, strlen(str));
+				break;
+			}
+			SelectObject(ghdc, oldfont);
+			DeleteObject(hfont);
 		}
 		EndPaint(hWnd, &ps);
 		break;
@@ -1263,30 +1311,67 @@ void PrintBlock(HDC ghdc) {
 }
 
 void PrintScore(HDC ghdc) {
+	int num;
 	TCHAR str[6];
 	HFONT hfont, oldfont;
 	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
 	oldfont = (HFONT)SelectObject(ghdc, hfont);
 	SetTextColor(ghdc, RGB(0, 0, 0));
-	wsprintf(str, "%d", score);
-	TextOut(ghdc, 230, 50, str, strlen(str));
+	num = digit();
+	switch(num) {
+	case 1:
+		wsprintf(str, "%d", score);
+		TextOut(ghdc, 236, 49, str, strlen(str));
+		break;
+	case 2:
+		wsprintf(str, "%d", score);
+		TextOut(ghdc, 230, 49, str, strlen(str));
+		break;
+	case 3:
+		wsprintf(str, "%d", score);
+		TextOut(ghdc, 224, 49, str, strlen(str));
+		break;
+	case 4:
+		wsprintf(str, "%d", score);
+		TextOut(ghdc, 219, 49, str, strlen(str));
+		break;
+	case 5:
+		wsprintf(str, "%d", score);
+		TextOut(ghdc, 212, 49, str, strlen(str));
+		break;
+	}
 	SelectObject(ghdc, oldfont);
 	DeleteObject(hfont);
 
 	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
 	oldfont = (HFONT)SelectObject(ghdc, hfont);
 	wsprintf(str, "%d", Goalscore);
-	TextOut(ghdc, 380, 50, str, strlen(str));
+	TextOut(ghdc, 375, 49, str, strlen(str));
 	SelectObject(ghdc, oldfont);
 	DeleteObject(hfont);
 }
 
 void PrintTurn(HDC ghdc) {
+	int num{ 1 };
+	if (Turn / 10 > 0) {
+		num = 2;
+	}
 	TCHAR str[3];
 	HFONT hfont, oldfont;
+	hfont = CreateFontA(20, 0, 0, 0, 1000, 0, 0, 0, HANGUL_CHARSET, 0, 0, 0, VARIABLE_PITCH || FF_ROMAN, "배달의민족주아");
+	oldfont = (HFONT)SelectObject(ghdc, hfont);
 	SetBkMode(ghdc, TRANSPARENT);
 	wsprintf(str, "%d", Turn);
-	TextOut(ghdc, 75, 50, str, strlen(str));
+	switch (num) {
+	case 1:
+		TextOut(ghdc, 80, 49, str, strlen(str));
+		break;
+	case 2:
+		TextOut(ghdc, 74, 49, str, strlen(str));
+		break;
+	}
+	SelectObject(ghdc, oldfont);
+	DeleteObject(hfont);
 }
 
 void PrintKirby(HDC ghdc) {
@@ -1931,4 +2016,22 @@ void Sound_Setup()
 	FMOD_System_CreateSound(System, "switchsound.mp3", FMOD_DEFAULT, 0, &effectSound[1]);
 	FMOD_System_CreateSound(System, "turnsound.mp3", FMOD_DEFAULT, 0, &effectSound[2]);
 	FMOD_System_CreateSound(System, "returnsound.mp3", FMOD_DEFAULT, 0, &effectSound[3]);
+}
+
+int digit() {
+	int num{ 1 };
+
+	if (score / 10 > 0) {
+		num = 2;
+		if (score / 100 > 0) {
+			num = 3;
+			if (score / 1000 > 0) {
+				num = 4;
+				if (score / 10000 > 0) {
+					num = 5;
+				}
+			}
+		}
+	}
+	return num;
 }
