@@ -1,10 +1,1 @@
-﻿  Game.cpp
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(64,41): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(828,46): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(904,43): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(1541,43): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(1621,42): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(1636,42): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(1651,42): warning C4305: '인수': 'double'에서 'float'(으)로 잘립니다.
-D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\KirbySmash\Game.cpp(2002,12): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  KirbySmash.vcxproj -> D:\Desktop\윈플기말과제\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
+﻿  KirbySmash.vcxproj -> D:\WindowProgramming\KirbySmash\Debug\KirbySmash.exe
