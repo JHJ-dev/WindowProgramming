@@ -44,7 +44,7 @@ enum {
 enum {
 	Small = 0, Big = 1
 };
-int skillAni[4] = { 6, 11, 5, 6};
+int skillAni[4] = { 7, 11, 5, 7 };	//공격, 구르기, 빨아들이기, 전화
 
 struct Object{
 	POINT pos;
