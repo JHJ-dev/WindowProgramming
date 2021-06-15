@@ -312,16 +312,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						SetTimer(hwnd, 11, 60, NULL);
 						selectedStage = i;
 						stage = i + 1;
-						if (selectedStage < nowStage) {
+						if (selectedStage < nowStage) {			//2->1, 3->2
 							stagekirby.moveIndex = POINTCNT - 1;
 							stagekirby.Movedir = -1;
+							stagekirby.Move = TRUE;
 						}
-						else if (selectedStage > nowStage) {
+						else if (selectedStage > nowStage) {	//1->2, 2->3
 							stagekirby.moveIndex = 0;
 							stagekirby.Movedir = 1;
+							stagekirby.Move = TRUE;
 						}
-						else  stagekirby.Movedir = 0;
-						stagekirby.Move = TRUE;
+						else {
+							stagekirby.aniIndex = 3;
+							stagekirby.Move = FALSE;
+							Loading = true;
+						}
 						SetTimer(hwnd, 10, 100, NULL);
 					}
 				}
@@ -632,14 +637,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					if (Loading) {
 						if (loadingCnt == 0) {	//페이드아웃
-							if (alpha < 247) alpha += 16;
+							if (alpha < 239) alpha += 16;
 							else {
 								alpha = 255;
 								loadingCnt++;
 							}
 						}
 						else {					//페이드인
-							if (alpha > 8) alpha -= 16;
+							if (alpha > 16) alpha -= 16;
 							else {
 								alpha = 0;
 								loadingCnt++;
@@ -698,39 +703,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			case 10:	//커비 이동
 			{
-				if (stagekirby.Movedir == 1) {	//우로 이동
-					if (stagekirby.moveIndex < POINTCNT - 1) {
-						if (selectedStage == 1) stagekirby.centerPos = { stage12[stagekirby.moveIndex].x, stage12[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
-						else stagekirby.centerPos = { stage23[stagekirby.moveIndex].x, stage23[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
-						if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += stagekirby.Movedir * 10;
-						stagekirby.moveIndex++;
+				if (!Loading) {
+					if (stagekirby.Movedir == 1) {	//우로 이동
+						if (stagekirby.moveIndex < POINTCNT - 1) {
+							if (selectedStage == 1) stagekirby.centerPos = { stage12[stagekirby.moveIndex].x, stage12[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
+							else stagekirby.centerPos = { stage23[stagekirby.moveIndex].x, stage23[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
+							if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += stagekirby.Movedir * 8;
+							stagekirby.moveIndex++;
+						}
+						else {
+							if (selectedStage == 1) nowStage = 1;
+							else nowStage = 2;
+							stagekirby.Move = FALSE;
+							stagekirby.aniIndex = 3;
+							Loading = true;
+						}
 					}
-					else {
-						if (selectedStage == 1) nowStage = 1;
-						else nowStage = 2;
-						stagekirby.Move = FALSE;
-						stagekirby.aniIndex = 3;
-						Loading = true;
+					else if (stagekirby.Movedir == -1) {	//좌로 이동
+						if (stagekirby.moveIndex > 0) {
+							if (selectedStage == 0) stagekirby.centerPos = { stage12[stagekirby.moveIndex].x, stage12[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
+							else stagekirby.centerPos = { stage23[stagekirby.moveIndex].x, stage23[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
+							if (cx > 0) cx += stagekirby.Movedir * 8;
+							stagekirby.moveIndex--;
+						}
+						else {
+							if (selectedStage == 0) nowStage = 0;
+							else nowStage = 1;
+							stagekirby.Move = FALSE;
+							stagekirby.aniIndex = 3;
+							Loading = true;
+						}
 					}
-				}
-				else if (stagekirby.Movedir == -1) {	//좌로 이동
-					if (stagekirby.moveIndex > 0) {
-						if (selectedStage == 0) stagekirby.centerPos = { stage12[stagekirby.moveIndex].x, stage12[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
-						else stagekirby.centerPos = { stage23[stagekirby.moveIndex].x, stage23[stagekirby.moveIndex].y - stagekirby.bitmapSize.y / 2 };
-						if (cx > 0) cx += stagekirby.Movedir * 10;
-						stagekirby.moveIndex--;
+					if (stagekirby.Move) {
+						if (stagekirby.aniIndex < 11) stagekirby.aniIndex++;
+						if (stagekirby.aniIndex == 11) stagekirby.aniIndex = 0;
 					}
-					else {
-						if (selectedStage == 0) nowStage = 0;
-						else nowStage = 1;
-						stagekirby.Move = FALSE;
-						stagekirby.aniIndex = 3;
-						Loading = true;
-					}
-				}
-				if (stagekirby.Move) {
-					if (stagekirby.aniIndex < 11) stagekirby.aniIndex++;
-					if (stagekirby.aniIndex == 11) stagekirby.aniIndex = 0;
 				}
 			}
 			break;
@@ -739,7 +746,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				if (Loading) {
 					if (loadingCnt == 0) {	//페이드아웃
-						if (alpha < 247) alpha += 16;
+						if (alpha < 239) alpha += 16;
 						else {
 							alpha = 255;
 							loadingCnt++;
@@ -810,7 +817,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 					else { //페이드인
-						if (alpha > 8) alpha -= 16;
+						if (alpha > 16) alpha -= 16;
 						else {
 							alpha = 0;
 							loadingCnt++;
@@ -943,11 +950,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					//카메라 좌우 스크롤
 				case 'a':
-					if (cx > 0) cx -= 5;
+					if (cx > 0) cx -= 8;
 					break;
 
 				case 'd':
-					if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += 5;
+					if (cx < stageBackground.bitmapSize.x - SCREENWIDTH) cx += 8;
 					break;
 				}
 			}
@@ -999,6 +1006,7 @@ LRESULT CALLBACK ChildProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case IDC_EXIT:	//스테이지씬으로 이동
 			exittost = true;
+			alpha = 0;
 			DestroyWindow(hWnd);
 			break;
 		case IDC_RETRY:
@@ -1444,8 +1452,8 @@ void SkillBomb(int mx, int my) {
 				skill = -1;
 				Turn--;
 				bombnum--;
-				FMOD_Channel_SetVolume(Channel[1], 0.1);
 				FMOD_System_PlaySound(System, effectSound[0], NULL, 0, &Channel[1]);
+				FMOD_Channel_SetVolume(Channel[1], 0.1);
 				break;
 			}
 		}
@@ -1524,8 +1532,8 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
-			FMOD_Channel_SetVolume(Channel[1], 0.3);
 			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
+			FMOD_Channel_SetVolume(Channel[1], 0.3);
 
 		}
 		break;
@@ -1539,8 +1547,8 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
-			FMOD_Channel_SetVolume(Channel[1], 0.3);
 			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
+			FMOD_Channel_SetVolume(Channel[1], 0.3);
 
 		}
 		break;
@@ -1554,8 +1562,8 @@ void SkillReturn() {
 			score = returnscore;
 			Turn--;
 			returnnum--;
-			FMOD_Channel_SetVolume(Channel[1], 0.1);
 			FMOD_System_PlaySound(System, effectSound[3], NULL, 0, &Channel[1]);
+			FMOD_Channel_SetVolume(Channel[1], 0.1);
 		}
 		break;
 	}
@@ -1922,5 +1930,5 @@ void Sound_Setup()
 	FMOD_System_CreateSound(System, "bombsound.mp3", FMOD_DEFAULT, 0, &effectSound[0]);
 	FMOD_System_CreateSound(System, "switchsound.mp3", FMOD_DEFAULT, 0, &effectSound[1]);
 	FMOD_System_CreateSound(System, "turnsound.mp3", FMOD_DEFAULT, 0, &effectSound[2]);
-	FMOD_System_CreateSound(System, "returnsound.wav", FMOD_DEFAULT, 0, &effectSound[3]);
+	FMOD_System_CreateSound(System, "returnsound.mp3", FMOD_DEFAULT, 0, &effectSound[3]);
 }
